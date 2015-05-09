@@ -1,0 +1,8 @@
+#Eclipse
+.project
+.cproject
+.classpath
+/.settings
+.checkstyle
+/Debug
+/Release
