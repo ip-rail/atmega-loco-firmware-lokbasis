@@ -7,6 +7,6 @@ Firmware for ATMega2561 loco controller with serial WIFI module (Wiz610wi/Raspbe
 - [ ] i2c (Ansteuerung Ledcontroller PCA9622 Adapterboard PLED01)
 - [ ] Servo Ansteuerung
 - [ ] Motor Regelung
-- [ ] Spannungs-Überwachung
+- [ ] Spannungs Überwachung
 
 * Pin-Belegung kommt noch
