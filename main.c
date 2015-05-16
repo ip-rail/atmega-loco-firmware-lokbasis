@@ -33,7 +33,7 @@
 #include "wlan.h"
 #include "funktionen.h"			// allgemeine Funktionen (Hardware und andere)
 #include "speed.h"				// Geschwindigkeit anpassen
-
+#include "ledc.h"				// LED-Controller
 
 
 //----------------------------------------------------------------------------------------------
@@ -89,15 +89,16 @@ int main(void)
 
 	init_motorctrl();	// Ausgänge für Motorsteuerung, PWM
 
+	#if defined( LEDC_PCA9622 ) || defined( LEDC_TLC59116 )
+	ledcontrol_init(LEDC1);	// LED-Controller
+	#endif	
+	
 	setbit(DDRD,PD6);	// Pin als Ausgang definieren - für Testsignal
 	setbit(DDRD,PD7);	// Pin als Ausgang definieren - für Testsignal
 
 	sei();	// Interrupts aufdrehen
 
 	// ========================  Hardware Initialisierung abgeschlossen  ================================================
-
-
-
 
 
 //-------------------------------------------------------------------------------------------------------------

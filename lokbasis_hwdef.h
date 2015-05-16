@@ -27,6 +27,11 @@
 //#define PHB01_MOTOR2		// Motorcontroller PHB01: eine 2. H-Brücke wird für Motor 2 verwendet
 #define UART_NR_WLAN 0		// uart0 für WLAN
 //#define UART_NR_RFID 1	// uart1 für RFID
+//#define LEDC_TLC59116	1	//LED-Controller TLC59116 ist vorhanden (es kann derzeit nur einer davon verwendet werden. entweder PCA9622 oder TLC59116!!)
+#define LEDC_PCA9622	1	//LED-Controller PCA9622 ist vorhanden
+
+
+
 //UART Konfiguration: siehe uart.h
 //-------------------------------------------------------------------------------------------
 
@@ -68,14 +73,57 @@
 //ADC
 #define ADC_SCHIENE PF0 		// Input, ADC Schienenspannung
 
-// I2C LED-Controller
-//#define LEDC_TLC59116	1			//LED-Controller TLC59116 ist vorhanden
-#define I2C_RESET   0xD6			// 0xD6 = Software Reset I2C Bus Adresse
-#define LEDC_MODE2_BLINK	32		// Mode 2 = Blinken
-#define LEDC_MODE2_DIMM		0		// Mode 2 = Dimmen
-#define LEDC1  0xC0      			// I2C-Adresse des LED-Controller
 
 #endif	// HW_UC02
+
+
+// I2C
+
+// I2C clock in Hz. Einstellung aus File twimaster.c
+// #define SCL_CLOCK  100000L	//100kHz
+#define SCL_CLOCK  50000L	//50kHz
+
+// I2C LED-Controller PCA9622,TLC59116
+//#define LEDC_TLC59116	1			//LED-Controller TLC59116 ist vorhanden
+#define LEDC_PCA9622	1			//LED-Controller PCA9622 ist vorhanden
+
+
+//ACHTUNG: i2c-Adressen werden schon um ein bit nach links verschoben hier angegeben (8bit statt 7bit),
+//         damit man nur mehr das Lese/Schreib-bit dazuaddieren muss!!
+
+#if defined( LEDC_TLC59116 )
+
+	#define LEDC_I2C_RESET   0xD6		// 0xD6 = Software Reset I2C Bus Adresse
+	#define LEDC1  0xC0      			// I2C-Adresse des LED-Controller
+	#define LEDC_MODE2_BLINK	0x20	// Mode 2 = Blinken
+	#define LEDC_MODE2_DIMM		0		// Mode 2 = Dimmen
+	
+#endif	// LEDC_TLC59116
+
+#if defined( LEDC_PCA9622 )
+
+	#define LEDC_I2C_RESET   0x06		// 0x03 = Software Reset Adresse der PLED01 (PCA9622) LED-Controller -> 0x03 << 1 = 0x06
+	#define LEDC1  0x1c      			// I2C-Adresse des LED-Controller 0x0e -> 0x1c
+	#define LEDC_MODE2_BLINK	0x25	// Mode 2 = Blinken
+	#define LEDC_MODE2_DIMM		5		// Mode 2 = Dimmen
+	
+#endif	// LEDC_PCA9622
+
+#define LEDC_MODE1	1		// Mode 1: ALLCALL aktiv(1) (nur bit0 auf 1, alle andern auf 0), für beide Controller gleich
+
+// Adressen der Register im PCA9622 und TLC59116
+#define PCA9622_ADDR_MODE1			0x00
+#define PCA9622_ADDR_MODE2			0x01
+#define PCA9622_ADDR_PWM0			0x02	// PWM (Helligkeits)-Register 1. LED
+#define PCA9622_ADDR_GRPPWM			0x12	// Gruppen-PWM (Helligkeit)
+#define PCA9622_ADDR_GRPFREQ		0x13	// Gruppen-Blink-Frequenz
+#define PCA9622_ADDR_LEDOUT0		0x14	// LED driver output state register (LED 0 - 3)
+#define PCA9622_ADDR_LEDOUT1		0x15	// LED driver output state register (LED 4 - 7)
+#define PCA9622_ADDR_LEDOUT2		0x16	// LED driver output state register (LED 8 - 11)
+#define PCA9622_ADDR_LEDOUT3		0x17	// LED driver output state register (LED 12 - 15)
+
+
+
 
 
 #if defined( WLAN_RASPI )

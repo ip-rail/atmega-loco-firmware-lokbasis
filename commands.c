@@ -87,6 +87,8 @@ void befehl_auswerten(void)
 	{
 		uart0_puts("<pong>");
 	}
+	
+	// TODO: Befehle für LED-Controller Licht ein/aus, Helligkeit fehlen noch!!
 
 	else
 	{
