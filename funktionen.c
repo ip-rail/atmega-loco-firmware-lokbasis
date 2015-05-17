@@ -333,7 +333,18 @@ void remcrlf(char *crlftext)
 	}
 }
 
-
+// freie GPIOs initialisieren (als Ausgang setzen)
+void init_gpios()
+{
+	// alles was auf 1 steht als Ausgänge setzen
+	DDRA |= GPIO_USABLE_PORT_A;
+	DDRB |= GPIO_USABLE_PORT_B;
+	DDRC |= GPIO_USABLE_PORT_C;
+	DDRD |= GPIO_USABLE_PORT_D;
+	DDRE |= GPIO_USABLE_PORT_E;
+	DDRF |= GPIO_USABLE_PORT_F;
+	DDRG |= GPIO_USABLE_PORT_G;
+}
 
 
 

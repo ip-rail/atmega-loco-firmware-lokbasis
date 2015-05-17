@@ -19,6 +19,7 @@
 #include "uart.h"
 #include "wlan.h"
 #include "funktionen.h"	// Funktionen für Hauptschleife und commands.c
+#include "ledc.h"
 
 
 //-----------------------------------------------------------------------------------------
@@ -49,11 +50,11 @@ void befehl_auswerten(void)
 	}
 
 	else if(!strcmp(wlan_string, "stopall"))
-		{
+	{
 				cli();
 				speed_soll = 0;
 				sei();
-		}
+	}
 
 	else if(!strncmp(wlan_string, "richtung:", 9))
 	{
@@ -76,10 +77,14 @@ void befehl_auswerten(void)
 
 	else if(!strncmp(wlan_string, "sd:", 3))	// Command für speed setzen
 	{
+		int zahl = 0;
 		strncpy(test, wlan_string+3, strlen(wlan_string+3)); 		// die beliebig lange Zahl rauskopiern
 
+		zahl = atoi(test);
+		if ((zahl < 0) || (zahl > 1023)) { zahl = 0; }		// wenn etwas nicht passt
+		
 		cli();
-		speed_soll = atoi(test);
+		speed_soll = zahl;
 		sei();
 	}
 
@@ -88,13 +93,30 @@ void befehl_auswerten(void)
 		uart0_puts("<pong>");
 	}
 	
-	// TODO: Befehle für LED-Controller Licht ein/aus, Helligkeit fehlen noch!!
+	else if(!strncmp(wlan_string, "l0:", 3))	// <l1:*nummer*> Licht einschalten: Licht *Nummer* 1-16
+	{
+		uint8_t lednr;
+		strncpy(test, wlan_string+3, strlen(wlan_string+3)); 
+		lednr = (uint8_t)atoi(test);
+		ledc_led_setpwm(LEDC1, lednr, 0);
+	}
+	
+	else if(!strncmp(wlan_string, "l0:", 3))	// <l0:*name*> Licht ausschalten: Licht *Nummer* 1-16
+	{
+		uint8_t lednr;
+		strncpy(test, wlan_string+3, strlen(wlan_string+3)); 
+		lednr = (uint8_t)atoi(test);
+		ledc_led_setpwm(LEDC1, lednr, 1);
+	}
 
+	// TODO: siwtch Befehle zum Schalten freier GPIOs
+	
+	
 	else
 	{
 		cmd_found = 0;
 		// Bearbeite ungültiges Kommando
-		// TODO: was machen?
+		// TODO: was machen? Rückmeldung unbekannter Befehl
 		alivecount--;	// den Zähler korrigieren (wurde bereits im vorhinein erhöhlt) - es werden nur gültige Befehle gezählt!!
 	}
 

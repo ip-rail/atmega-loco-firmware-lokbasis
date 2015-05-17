@@ -56,6 +56,7 @@ void set_speed(void)
 
 
 	//----- Geschwindigkeitsänderung ------------------------------------------------------------------------------
+	// TODO: Geschwindigkeitsänderung sollte verfeinert werden!
 
 	if (richtung != richtung_soll)	// Richtungswechsel: speed auf 0 reduzieren
 	{

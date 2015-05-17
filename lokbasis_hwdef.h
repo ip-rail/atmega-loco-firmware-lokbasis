@@ -74,6 +74,15 @@
 #define ADC_SCHIENE PF0 		// Input, ADC Schienenspannung
 
 
+// GPIOs frei für Schalt-Funktionen (Licht usw.)
+#define GPIO_USABLE_PORT_A	0
+#define GPIO_USABLE_PORT_B	143
+#define GPIO_USABLE_PORT_C	255
+#define GPIO_USABLE_PORT_D	240
+#define GPIO_USABLE_PORT_E	56
+#define GPIO_USABLE_PORT_F	0
+#define GPIO_USABLE_PORT_G	23
+
 #endif	// HW_UC02
 
 

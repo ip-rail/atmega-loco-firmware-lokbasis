@@ -17,6 +17,6 @@ extern void motor_wakeup(void);
 extern void motor_reset(void);
 extern void warte_ms(unsigned int wartezeit);
 extern void remcrlf(char *crlftext);
-
+extern void init_gpios();
 
 #endif /* FUNKTIONEN_H_ */

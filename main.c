@@ -73,6 +73,9 @@ const char txtp_cmdend[] PROGMEM = ">";				// Befehlsende-Zeichen
 const char txtp_errmotor[] PROGMEM = "<error:motor:";		// Motor-Error
 const char txtp_sd[] PROGMEM = "<sd:";		// Speed-Rückmeldung
 
+
+
+
 int main(void)
 {
 	char test[UART_MAXSTRLEN+1] = "";			// für string-Bearbeitungen (Rückmeldungen usw.)
@@ -95,6 +98,8 @@ int main(void)
 	
 	setbit(DDRD,PD6);	// Pin als Ausgang definieren - für Testsignal
 	setbit(DDRD,PD7);	// Pin als Ausgang definieren - für Testsignal
+	
+	//init_gpios();		// frei verfügbare GPIOs als Ausgang definieren
 
 	sei();	// Interrupts aufdrehen
 
