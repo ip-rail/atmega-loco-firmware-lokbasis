@@ -97,7 +97,7 @@
 #define LEDC_PCA9622	1			//LED-Controller PCA9622 ist vorhanden
 
 
-//ACHTUNG: i2c-Adressen werden schon um ein bit nach links verschoben hier angegeben (8bit statt 7bit),
+//ACHTUNG: i2c-Adressen werden in der AVR-Software schon um ein bit nach links verschoben angegeben (8bit statt 7bit),
 //         damit man nur mehr das Lese/Schreib-bit dazuaddieren muss!!
 
 #if defined( LEDC_TLC59116 )
