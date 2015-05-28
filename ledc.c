@@ -17,6 +17,7 @@
 #include "lokbasis_hwdef.h"
 #include "main.h"
 #include "i2cmaster.h"			// I2C Funktionen
+#include "funktionen.h"
 
 
 // I2C, LED-Controller-Funktionen PCA9622,TLC59116

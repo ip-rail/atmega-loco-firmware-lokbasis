@@ -12,6 +12,7 @@
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
+#include <avr/wdt.h>	//für Watchdog Reset
 
 #include "lokbasis_hwdef.h"		// Hardware-Definitionen für die verschiedenen Boards
 #include "main.h"
@@ -93,12 +94,12 @@ void befehl_auswerten(void)
 		uart0_puts("<pong>");
 	}
 	
-	else if(!strncmp(wlan_string, "l0:", 3))	// <l1:*nummer*> Licht einschalten: Licht *Nummer* 1-16
+	else if(!strncmp(wlan_string, "l1:", 3))	// <l1:*nummer*> Licht einschalten: Licht *Nummer* 1-16
 	{
 		uint8_t lednr;
 		strncpy(test, wlan_string+3, strlen(wlan_string+3)); 
 		lednr = (uint8_t)atoi(test);
-		ledc_led_setpwm(LEDC1, lednr, 0);
+		ledc_led_setpwm(LEDC1, lednr, 255);
 	}
 	
 	else if(!strncmp(wlan_string, "l0:", 3))	// <l0:*name*> Licht ausschalten: Licht *Nummer* 1-16
@@ -106,10 +107,18 @@ void befehl_auswerten(void)
 		uint8_t lednr;
 		strncpy(test, wlan_string+3, strlen(wlan_string+3)); 
 		lednr = (uint8_t)atoi(test);
-		ledc_led_setpwm(LEDC1, lednr, 1);
+		ledc_led_setpwm(LEDC1, lednr, 0);
 	}
 
-	// TODO: siwtch Befehle zum Schalten freier GPIOs
+	else if(!strcmp(wlan_string, "reset"))
+	{
+		cli();
+		wdt_enable(WDTO_15MS);
+		// Wait for the watchdog to bite
+		while (1);
+	}
+
+	// TODO: switch Befehle zum Schalten freier GPIOs
 	
 	
 	else

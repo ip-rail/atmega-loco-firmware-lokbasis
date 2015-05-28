@@ -2,8 +2,8 @@
  *
  * main.c
  *
- *	Version: 0.1
- *  Created on: 14.12.2014 - 06.05.2015
+ *	Version: 0.2
+ *  Created on: 14.12.2014 - 28.05.2015
  *  Author: Michael Brunnbauer
  */
 
@@ -34,6 +34,23 @@
 #include "funktionen.h"			// allgemeine Funktionen (Hardware und andere)
 #include "speed.h"				// Geschwindigkeit anpassen
 #include "ledc.h"				// LED-Controller
+#include "i2cmaster.h"			// I2C Funktionen
+#include <avr/wdt.h>			// watchdog
+
+
+// Watchdog Deaktivierung im Startcode. Notwendig, da Watchdog für Software-Reset (->Bootloader) verwendet wird
+// Function Prototype
+void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
+
+
+// Function Implementation
+void wdt_init(void)
+{
+    MCUSR = 0;
+    wdt_disable();
+    return;
+}
+
 
 
 //----------------------------------------------------------------------------------------------
@@ -58,15 +75,9 @@ volatile unsigned char motor_reg = 1;	// Variable für Motor-Regelung ein/aus (au
 uint8_t motorerror = 0;					// Errorcode von Motorcontroller: 0 = kein Error
 
 
-
-//struct devdata_t lokdata;			// Lokdata zur Laufzeit
-//struct devdata_t EElokdata EEMEM;	// Lokdata EEPROM variable
-
-//uint8_t eetest[4] EEMEM = { 2,4,6,8 };
-
 // LokData im Flash
 const char dev_swname[] PROGMEM = "lokbasis";     	// -> keine Änderung durch User -> flash
-const char dev_swversion[] PROGMEM = "0.02";   		// -> keine Änderung durch User -> flash
+const char dev_swversion[] PROGMEM = "0.04";   		// -> keine Änderung durch User -> flash
 
 //Strings im Flash für CMD-Rückmeldungen über WLAN
 const char txtp_cmdend[] PROGMEM = ">";				// Befehlsende-Zeichen
@@ -93,7 +104,8 @@ int main(void)
 	init_motorctrl();	// Ausgänge für Motorsteuerung, PWM
 
 	#if defined( LEDC_PCA9622 ) || defined( LEDC_TLC59116 )
-	ledcontrol_init(LEDC1);	// LED-Controller
+	i2c_init();
+	ledcontrol_init(LEDC1);	// LED-Controller TODO: Funktion testen
 	#endif	
 	
 	setbit(DDRD,PD6);	// Pin als Ausgang definieren - für Testsignal
@@ -106,17 +118,19 @@ int main(void)
 	// ========================  Hardware Initialisierung abgeschlossen  ================================================
 
 
+	uart0_puts("<MC start>");
+
+	setbit(PORTD,PD6);	// TEST: auf HI
+
 //-------------------------------------------------------------------------------------------------------------
 //------                       H A U P T S C H L E I F E                                               --------
 //-------------------------------------------------------------------------------------------------------------
 
 
 
-	//uart0_putc('H');
-	uart0_puts("<MC start>");
 
 
-	setbit(PORTD,PD6);	// auf HI
+
 
 
 	while (1)	// Hauptschleife (endlos)
@@ -124,7 +138,6 @@ int main(void)
 		loop_count++;	// Zähler für Hauptschleife
 
 		PORT_TESTSIGNAL ^= (1<<TESTSIGNAL);	// Signale bei jedem Durchlauf togglen (oder 1x pro Sekunde weiter unten)
-		//PORT_TESTSIGNAL ^= (1<<TESTSIGNAL2);
 
 
 		if (alivesecs >= 3)	// //TODO lokdata // Prüfintervall = ALIVE_INTERVAL Sekunden! -> Lok stoppt nach ALIVE_INTERVAL sek herrenloser Fahrt
@@ -133,12 +146,13 @@ int main(void)
 			{
 				//alone = 1;
 
-
 			}
 				alivecount = 0;	// Zähler rücksetzen
 				alivesecs = 0;
 		}
 
+		//Error von MotorController checken (passt für phb01 und Pololu 24v20) -> Error wird in motorerror gespeichert
+		checkMotorStatus();  // TODO: Funktion testen
 
 
 		if (state & STATE_5X_PRO_SEK)
@@ -152,14 +166,22 @@ int main(void)
 
 		if (state & STATE_1X_PRO_SEK)		// Meldung an Server bei == 1 / Steuergerät (ca. 1x pro Sekunde)
 		{
-			//PORT_TESTSIGNAL ^= (1<<TESTSIGNAL);	// Signale 1x pro Sekunde togglen
-
-
 			memset(test, 0, UART_MAXSTRLEN+1);	// string leeren
 			strlcpy_P(test, txtp_sd, 5);	// Rückmeldung der Geschwindigkeit	//bei der Länge immer 0-Zeichen mitzählen!
 			itoa(speed, test+4, 10);
 			strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1);	// will länge des kompletten "test" buffers+0
 			uart0_puts(test);
+
+
+
+			/*
+			// Test-Ausgabe MotorStatus
+			memset(test, 0, UART_MAXSTRLEN+1);	// string leeren
+			strlcpy_P(test, txtp_errmotor, 14);
+			ltoa(motorerror, test+13, 10);
+			strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1); // will Länge des kompletten "test" buffers+0
+			uart0_puts(test);
+			*/
 
 
 			/*
@@ -169,7 +191,7 @@ int main(void)
 			log_puts_P("\r\n");
 			*/
 
-			// Spannungsmeldung Schiene, Akku und ev. Motoren
+			// TODO: Spannungsmeldung Schiene, Akku und ev. Motoren
 
 			last_loop_count = loop_count;	// ermittelten loopcount sichern
 			loop_count = 0;	// loopcount sekündlich zurücksetzen -> ergibt loops/s
@@ -184,7 +206,6 @@ int main(void)
 
 
 	}	// Ende Hauptschleife (endlos)
-
 
 } // main ende
 

@@ -93,9 +93,6 @@
 #define SCL_CLOCK  50000L	//50kHz
 
 // I2C LED-Controller PCA9622,TLC59116
-//#define LEDC_TLC59116	1			//LED-Controller TLC59116 ist vorhanden
-#define LEDC_PCA9622	1			//LED-Controller PCA9622 ist vorhanden
-
 
 //ACHTUNG: i2c-Adressen werden in der AVR-Software schon um ein bit nach links verschoben angegeben (8bit statt 7bit),
 //         damit man nur mehr das Lese/Schreib-bit dazuaddieren muss!!

@@ -48,9 +48,13 @@ extern unsigned char alivecount;			// zählt die empfangen Meldungen der Gegenste
 extern volatile char alone;
 extern char wlan_string[UART_MAXSTRLEN+1];  // globaler String zum Abspeichern des vom WLAN empfangen Strings in read_wlan
 
-extern const char dev_swname[] PROGMEM;
-extern const char dev_swversion[] PROGMEM;
+extern const char dev_swname[];
+extern const char dev_swversion[];
 
+//Strings im Flash für CMD-Rückmeldungen über WLAN
+extern const char txtp_cmdend[];
+extern const char txtp_errmotor[];
+extern const char txtp_sd[];
 
 
 #endif /* MAIN_H_ */

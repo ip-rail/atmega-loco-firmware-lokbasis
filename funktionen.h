@@ -15,6 +15,7 @@ extern void init_pwm(char freq_pwm);
 extern void motor_sleep(void);
 extern void motor_wakeup(void);
 extern void motor_reset(void);
+extern void checkMotorStatus();
 extern void warte_ms(unsigned int wartezeit);
 extern void remcrlf(char *crlftext);
 extern void init_gpios();

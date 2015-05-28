@@ -28,6 +28,10 @@ void set_speed(void)
 {
 	int speeddelta = 0;
 
+	// check motorerror
+	if (motorerror > 0) { speed_soll = 0; } // wenn eine Motor-Error gemeldet wird -> Geschwindigkeit auf 0
+
+
 	//---------- Anfangszustand: Speedänderung von 0 -> Richtung am Motor setzen --------------------
 	// Richtungswechsel nur bei Speed == 0, dafür immer, wenn Speed-Änderung vorliegt
 	if ((speed == 0) & (speed_soll != 0))
@@ -50,11 +54,11 @@ void set_speed(void)
 		{
 
 #if defined( HW_TESTBOARD2 ) || defined( PHB01_MOTOR1 )
-			clear(PORT_MOTOR, MOTOR1_DIR);	// Motor1 rückwärts
+			clearbit(PORT_MOTOR, MOTOR1_DIR);	// Motor1 rückwärts
 #endif
 
 #if defined( PHB01_MOTOR2 )
-			clear(PORT_MOTOR, MOTOR2_DIR);	// Motor2 (eigene H-Brücke) vorwärts
+			clearbit(PORT_MOTOR, MOTOR2_DIR);	// Motor2 (eigene H-Brücke) vorwärts
 #endif
 
 			richtung = RICHTUNG_RW;

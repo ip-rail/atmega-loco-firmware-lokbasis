@@ -110,6 +110,7 @@ void init_motorctrl(void)
 
 	#if defined( PHB01_MOTOR1 )
 		DDR_MOTOR |= (1<<MOTOR1_DIR) | (1<<MOTOR1_RESET);	// als Ausgänge setzen - nur 1 H-Brücke
+		DDR_MOTOR &= ~((1<<MOTOR1_FF1) | (1<<MOTOR1_FF2));	// Fehlerpins als Eingänge setzen
 
 		//PORT_MOTOR |= (1<<MOTOR1_DIR);	// Richtung auf 1 setzen // je nach Motorcontroller
 		PORT_MOTOR &= ~(1<<MOTOR1_DIR);   	// Motor-Richtung auf 0 // bei diesem Controller: vorwärts
@@ -121,6 +122,7 @@ void init_motorctrl(void)
 
 	#if defined( PHB01_MOTOR2 )
 		DDR_MOTOR |= (1<<MOTOR2_DIR) | (1<<MOTOR2_RESET);	// als Ausgänge setzen
+		DDR_MOTOR &= ~((1<<MOTOR2_FF1)  | (1<<MOTOR2_FF2));	// Fehlerpins als Eingänge setzen
 
 		//PORT_MOTOR |= (1<<MOTOR2_DIR);	// Richtung auf 1 setzen // je nach Motorcontroller
 		PORT_MOTOR &= ~(1<<MOTOR2_DIR);   	// Motor-Richtung auf 0 // bei diesem Controller: vorwärts
@@ -135,6 +137,7 @@ void init_motorctrl(void)
 
 #endif
 }
+
 
 
 void init_pwm(char freq_pwm)	// Timer 1 für Motor-PWM initialisieren
@@ -281,22 +284,55 @@ void init_pwm(char freq_pwm)	// Timer 1 für Motor-PWM initialisieren
 void motor_sleep(void)
 {
 	PORT_MOTOR &= ~(1<<MOTOR1_RESET);	// Reset auf LO
+	//TODO: Motor2 fehlt noch
 }
 
 // Motorcontroller PHB01 aus Schlafmodus aufwecken (dauert ca. 3ms)
 void motor_wakeup(void)
 {
 	PORT_MOTOR |= (1<<MOTOR1_RESET);	// Reset auf HI
-	warte_ms(4);	// TODO: Wartezeit sinnvoll?
+	//warte_ms(4);	// TODO: Wartezeit sinnvoll?
 }
 
-// Motorcontroller PHB01 Reset zum Fehlerquitieren (wie lange auf LO?)
+// Motorcontroller PHB01 Reset zum Fehlerquitieren (wie lange auf LOW: >0,1µs <3,5µs)
 void motor_reset(void)
 {
 	PORT_MOTOR &= ~(1<<MOTOR1_RESET);	// Reset auf LO
-	warte_ms(10);	// TODO: wie lange soll der Reset-Impuls dauern? testweise 10ms
+	_delay_us(1);	// LO für 1µs
 	PORT_MOTOR |= (1<<MOTOR1_RESET);	// Reset auf HI
 }
+
+
+//Error von MotorController checken (passt für phb01 und Pololu 24v20)
+void checkMotorStatus()
+{
+
+	uint8_t error_alt = motorerror;
+	motorerror = 0;
+	char test[UART_MAXSTRLEN+1];
+
+	if (PIN_MOTOR & (1<<MOTOR1_FF1)) { motorerror |= 1; } 		else { motorerror &= ~1; }	// bit 0
+	if (PIN_MOTOR & (1<<MOTOR1_FF2)) { motorerror |= (1<<1); } 	else { motorerror &= ~2; }	// bit 1
+
+	#if defined( PHB01_MOTOR2 )
+
+			if (PIN_MOTOR & (1<<MOTOR2_FF1)) { motorerror |= (1<<2); } 	else { motorerror &= ~4; }	// bit 2
+			if (PIN_MOTOR & (1<<MOTOR2_FF2)) { motorerror |= (1<<3); } 	else { motorerror &= ~8; }	// bit 3
+	#endif	// PHB01_MOTOR2
+
+
+	if (motorerror > 0)	// bei Error: Speed auf 0 setzen -> stop (geschieht nicht sofort!!)
+	{
+		if (error_alt == 0)	// beim ersten Auftreten an Controller melden
+		{
+			memset(test, 0, UART_MAXSTRLEN+1);	// string leeren
+			strlcpy_P(test, txtp_errmotor, 14);
+			ltoa(motorerror, test+13, 10);
+			strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1); // will Länge des kompletten "test" buffers+0
+			uart0_puts(test);
+		}
+	}
+} // end checkMotorStatus()
 
 
 //---------------------------------------------------------
