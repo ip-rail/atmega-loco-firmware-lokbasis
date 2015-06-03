@@ -74,6 +74,15 @@ volatile char alivesecs = 0;	// globlae Variable die zählt, wie lange die Zählun
 volatile unsigned char motor_reg = 1;	// Variable für Motor-Regelung ein/aus (auch für isr verwendet)
 uint8_t motorerror = 0;					// Errorcode von Motorcontroller: 0 = kein Error
 
+//ADC
+volatile uint8_t adcchannel = 0;		// aktueller ADC channel 0-7
+volatile uint8_t adcreadcount = 0;		// counter für Lesevorgänge pro ADC channel
+volatile unsigned int adcvalue[8][4] = { {0,0,0,0},	// 8 cannels, 4 Werte werden gelesen
+                     	 	 	  	     {0,0,0,0},
+                     	 	 	  	     {0,0,0,0},
+                     	 	 	  	     {0,0,0,0}};
+
+
 
 // LokData im Flash
 const char dev_swname[] PROGMEM = "lokbasis";     	// -> keine Änderung durch User -> flash
@@ -83,7 +92,7 @@ const char dev_swversion[] PROGMEM = "0.04";   		// -> keine Änderung durch User
 const char txtp_cmdend[] PROGMEM = ">";				// Befehlsende-Zeichen
 const char txtp_errmotor[] PROGMEM = "<error:motor:";		// Motor-Error
 const char txtp_sd[] PROGMEM = "<sd:";		// Speed-Rückmeldung
-
+const char txtp_pong[] PROGMEM = "<pong>";	// antwort für den ping Befe
 
 
 
@@ -240,6 +249,49 @@ ISR(TIMER5_COMPA_vect) {
 
 }
 
+
+// ADC Interrupt routine
+
+ISR(ADC_vect) {
+
+	unsigned int val;
+
+	//TODO: ACHTUNG: alles noch alt: muss noch geändert werden (ist aus "lokbasis1 - Kopie v0.7")
+	// var:
+	// volatile uint8_t adcchannel = 0;			// aktueller ADC channel (0-7)
+	// volatile uint8_t adcreadcount = 0;		// counter für Lesevorgänge pro ADC channel
+	// volatile unsigned int adcvalue[adcchannel][adcreadcount-1] // 8 cannels, 4 Werte werden gelesen (der erste wird ignoriert!)
+
+	// auslesen und in richtiger Variable speichern
+	// 3 oder 5 werte lesen, den 1. verwerfen
+	// danach auf nächsten port umstellen
+	// dann in der Hauptschleife den Wert mitteln
+
+	// alt: nach der Methode kracht es!!! Reboots osw!! solbad der Interrupt deaktiviert ist, passt alles!!
+
+
+	val = ADC;	//Wert muss immer gelesen werden
+
+	if (adcreadcount > 0)
+	{
+		adcvalue[adcchannel][adcreadcount-1] = val;
+	}
+
+	adcreadcount++;
+
+	if (adcreadcount > 4)
+	{
+		adcreadcount = 0;
+		adcchannel++;
+		ADMUX = (ADMUX & ~(0x1F)) | (adcchannel & 0x1F);	// nächsten channel einstellen
+	}
+
+	if (adcchannel > 7) { adcchannel = 0; }
+
+	setbit(ADCSRA,ADSC);	// start next conversion
+
+
+}
 
 
 

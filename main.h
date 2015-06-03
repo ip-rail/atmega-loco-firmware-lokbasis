@@ -55,6 +55,7 @@ extern const char dev_swversion[];
 extern const char txtp_cmdend[];
 extern const char txtp_errmotor[];
 extern const char txtp_sd[];
+extern const char txtp_pong[];
 
 
 #endif /* MAIN_H_ */

@@ -89,10 +89,7 @@ void befehl_auswerten(void)
 		sei();
 	}
 
-	else if(!strcmp(wlan_string, "ping"))	// mit "<pong>" antworten
-	{
-		uart0_puts("<pong>");
-	}
+	else if(!strcmp(wlan_string, "ping"))	{ uart0_puts_p(txtp_pong); }	// mit "<pong>" antworten
 	
 	else if(!strncmp(wlan_string, "l1:", 3))	// <l1:*nummer*> Licht einschalten: Licht *Nummer* 1-16
 	{
@@ -110,12 +107,11 @@ void befehl_auswerten(void)
 		ledc_led_setpwm(LEDC1, lednr, 0);
 	}
 
-	else if(!strcmp(wlan_string, "reset"))
+	else if(!strcmp(wlan_string, "reset"))	// reset for starting bootloader
 	{
 		cli();
-		wdt_enable(WDTO_15MS);
-		// Wait for the watchdog to bite
-		while (1);
+		wdt_enable(WDTO_15MS);	// activate watchdog timer and
+		while (1);				// wait for watchdog reset
 	}
 
 	// TODO: switch Befehle zum Schalten freier GPIOs

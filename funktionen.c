@@ -383,4 +383,47 @@ void init_gpios()
 }
 
 
+// ADC initialisieren
+void init_adc()
+{
+	// https://www.mikrocontroller.net/articles/AVR-GCC-Tutorial/Analoge_Ein-_und_Ausgabe#ADC_.28Analog_Digital_Converter.29
+	clearbit(PRR0,PRADC);	// Power Reduction bit disabled
+	clearbit(DDRF,0);		// Port F  (ADC0-7)  auf Eingang (0) schalten
+	clearbit(DDRF,1);
+	clearbit(DDRF,2);
+	clearbit(DDRF,3);
+	clearbit(DDRF,4);
+	clearbit(DDRF,5);
+	clearbit(DDRF,6);
+	clearbit(DDRF,7);
+
+	//setbit(DIDR0,ADC0D);	// digital input buffer disabled für ADC0 pin (reduces power consumption, besser für ADC)
+	DIDR0 = 0xff;			// gleich für den ganzen Port F setzen (ADC0D - ADC7D)
+
+	clearbit(ADCSRA,ADATE);	// nicht: auto trigger enable
+	clearbit(ADMUX,ADLAR);	// right-justified
+	setbit(ADCSRA,ADPS2);	// prescaler = 128 (die langsamste Variante)
+	setbit(ADCSRA,ADPS1);	// prescaler = 128
+	setbit(ADCSRA,ADPS0);	// prescaler = 128
+
+	clearbit(ADMUX,REFS1);	// AVCC (5V) Referenz
+	setbit(ADMUX,REFS0);	// AVCC (5V) Referenz
+
+
+
+	// Kanal wählen Beispiel:
+	uint8_t channel = 0;	// ADC0
+	ADMUX = (ADMUX & ~(0x1F)) | (channel & 0x1F);
+	clearbit(ADCSRB,MUX5);	//oberstes bit (in anderem Register) ist für single channel ADC0-7 immer 0!
+
+	setbit(ADCSRA,ADEN);	// ADC enable
+
+	//setbit(ADCSRA,ADIE);	// ADC interrupt enable
+	//setbit(ADCSRA,ADSC);	// start (each) ADC conversion
+	//erste Messung immer ignorieren
+
+
+}
+
+
 
