@@ -89,11 +89,32 @@ const char dev_swname[] PROGMEM = "lokbasis";     	// -> keine Änderung durch Us
 const char dev_swversion[] PROGMEM = "0.04";   		// -> keine Änderung durch User -> flash
 
 //Strings im Flash für CMD-Rückmeldungen über WLAN
-const char txtp_cmdend[] PROGMEM = ">";				// Befehlsende-Zeichen
+const char txtp_cmdend[] PROGMEM = ">";						// Befehlsende-Zeichen
 const char txtp_errmotor[] PROGMEM = "<error:motor:";		// Motor-Error
-const char txtp_sd[] PROGMEM = "<sd:";		// Speed-Rückmeldung
-const char txtp_pong[] PROGMEM = "<pong>";	// antwort für den ping Befe
+const char txtp_sd[] PROGMEM = "<sd:";						// Speed-Rückmeldung
+const char txtp_pong[] PROGMEM = "<pong>";					// Antwort für den ping Befe
+const char txtp_default_lok_name[] PROGMEM = "Lok X";			// Standardwert für EEData Lokname
+const char txtp_default_owner_name[] PROGMEM = "TheOwner";		// Standardwert für EEData Owner-Name
 
+// Befehle
+const char txtp_cmd_stop[] PROGMEM = "stop";
+const char txtp_cmd_off[] PROGMEM = "off";
+const char txtp_cmd_stopall[] PROGMEM = "stopall";
+const char txtp_cmd_richtung[] PROGMEM = "richtung:";
+const char txtp_cmddata_vw[] PROGMEM = "vw";
+const char txtp_cmddata_rw[] PROGMEM = "rw";
+const char txtp_cmd_sd[] PROGMEM = "sd:";
+const char txtp_cmd_ping[] PROGMEM = "ping";
+const char txtp_cmd_l1[] PROGMEM = "l1:";
+const char txtp_cmd_l0[] PROGMEM = "l0:";
+const char txtp_cmd_reset[] PROGMEM = "reset";
+const char txtp_cmd_onameset[] PROGMEM = "onameset:";
+const char txtp_cmddata_start[] PROGMEM = "start:";
+const char txtp_cmddata_add[] PROGMEM = "add:";
+const char txtp_cmddata_end[] PROGMEM = "end:";
+
+
+const char txtp_cmd_[] PROGMEM = "";
 
 
 int main(void)

@@ -8,6 +8,8 @@
 #ifndef FUNKTIONEN_H_
 #define FUNKTIONEN_H_
 
+#define MUX5 3		// MUX5 = ADCSRB, bit 3 (von bit0 weg gezählt!) - scheint nicht definiert zu sein
+
 extern void init_timer5();
 extern void init_uart(uint8_t uartnr, const unsigned int uartsetting);
 extern void init_motorctrl(void);

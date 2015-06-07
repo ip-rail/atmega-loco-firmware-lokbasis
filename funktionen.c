@@ -414,7 +414,9 @@ void init_adc()
 	// Kanal wählen Beispiel:
 	uint8_t channel = 0;	// ADC0
 	ADMUX = (ADMUX & ~(0x1F)) | (channel & 0x1F);
-	clearbit(ADCSRB,MUX5);	//oberstes bit (in anderem Register) ist für single channel ADC0-7 immer 0!
+	clearbit(ADCSRB,MUX5);	//oberstes bit (in anderem Register) ist für single channel ADC0-7 immer 0! //MUX5 =3 (bit 3)
+
+	ADCSRB &= ~((1<< MUX5));
 
 	setbit(ADCSRA,ADEN);	// ADC enable
 

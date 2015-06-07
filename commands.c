@@ -6,69 +6,69 @@
  */
 
 #include <avr/io.h>
-#include <string.h>		// für "strcmp"
-#include <stdlib.h>		// für "itoa"
-#include <util/delay.h>	// für delay_ms()
+#include <string.h>		// fÃ¼r "strcmp"
+#include <stdlib.h>		// fÃ¼r "itoa"
+#include <util/delay.h>	// fÃ¼r delay_ms()
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
-#include <avr/wdt.h>	//für Watchdog Reset
+#include <avr/wdt.h>	//fÃ¼r Watchdog Reset
 
-#include "lokbasis_hwdef.h"		// Hardware-Definitionen für die verschiedenen Boards
+#include "lokbasis_hwdef.h"		// Hardware-Definitionen fÃ¼r die verschiedenen Boards
 #include "main.h"
 #include "commands.h"
 #include "uart.h"
 #include "wlan.h"
-#include "funktionen.h"	// Funktionen für Hauptschleife und commands.c
+#include "funktionen.h"	// Funktionen fÃ¼r Hauptschleife und commands.c
 #include "ledc.h"
-
+#include "eedata.h"
 
 //-----------------------------------------------------------------------------------------
 // befehl_auswerten: wlan_string wird ausgewertet und der Befehl umgesetzt
-// es darf nur ein einziger gültiger Befehl vorhanden sein -> daher aufruf aus check_wlan_cmd()
+// es darf nur ein einziger gÃ¼ltiger Befehl vorhanden sein -> daher aufruf aus check_wlan_cmd()
 // die <> sind bereits entfernt!!!
 //-----------------------------------------------------------------------------------------
 void befehl_auswerten(void)
 {
 	char test[UART_MAXSTRLEN+1];
 	memset(test, 0, UART_MAXSTRLEN+1);	// text leeren
-	alivecount++;	// Meldungen von der Gegenstelle zählen (wenn es kein gültiger Befehl war, am Ende wieder --;
+	alivecount++;	// Meldungen von der Gegenstelle zÃ¤hlen (wenn es kein gÃ¼ltiger Befehl war, am Ende wieder --;
 
 	uint8_t cmd_found = 1;	// checken, ob cmd behandelt wurde oder nicht
 
-	if(!strcmp(wlan_string, "stop"))
+	if(!strcmp_P(wlan_string, txtp_cmd_stop))	// "stop"
 	{
 		cli();
 		speed_soll = 0;
 		sei();
 	}
 
-	else if(!strcmp(wlan_string, "off"))
+	else if(!strcmp_P(wlan_string, txtp_cmd_off))	// "off"
 	{
-			cli();
-			speed_soll = 0;
-			sei();
+		cli();
+		speed_soll = 0;
+		sei();
 	}
 
-	else if(!strcmp(wlan_string, "stopall"))
+	else if(!strcmp_P(wlan_string, txtp_cmd_stopall))	// "stopall"
 	{
-				cli();
-				speed_soll = 0;
-				sei();
+		cli();
+		speed_soll = 0;
+		sei();
 	}
 
-	else if(!strncmp(wlan_string, "richtung:", 9))
+	else if(!strncmp_P(wlan_string, txtp_cmd_richtung, 9))	//  "richtung:"
 	{
 		strncpy(test, wlan_string+9, 2);
 		test[2] = (char) 0;
 
-		if(!strcmp(test, "vw"))		// vorwärts
+		if(!strcmp_P(test, txtp_cmddata_vw))		// "vw" - vorwÃ¤rts
 		{
 			cli();
 			richtung_soll = RICHTUNG_VW;
 			sei();
 		}
-		else if(!strcmp(test, "rw"))
+		else if(!strcmp_P(test, txtp_cmddata_rw))	// "rw" - rÃ¼ckwÃ¤rts
 		{
 			cli();
 			richtung_soll = RICHTUNG_RW;
@@ -76,30 +76,30 @@ void befehl_auswerten(void)
 		}
 	}
 
-	else if(!strncmp(wlan_string, "sd:", 3))	// Command für speed setzen
+	else if(!strncmp_P(wlan_string, txtp_cmd_sd, 3))	// "sd:" Command fÃ¼r speed setzen
 	{
 		int zahl = 0;
 		strncpy(test, wlan_string+3, strlen(wlan_string+3)); 		// die beliebig lange Zahl rauskopiern
 
 		zahl = atoi(test);
 		if ((zahl < 0) || (zahl > 1023)) { zahl = 0; }		// wenn etwas nicht passt
-		
+
 		cli();
 		speed_soll = zahl;
 		sei();
 	}
 
-	else if(!strcmp(wlan_string, "ping"))	{ uart0_puts_p(txtp_pong); }	// mit "<pong>" antworten
-	
-	else if(!strncmp(wlan_string, "l1:", 3))	// <l1:*nummer*> Licht einschalten: Licht *Nummer* 1-16
+	else if(!strcmp_P(wlan_string, txtp_cmd_ping))	{ uart0_puts_p(txtp_pong); }	// "ping" - mit "<pong>" antworten
+
+	else if(!strncmp_P(wlan_string, txtp_cmd_l1, 3))	// "l1:" - <l1:*nummer*> Licht einschalten: Licht *Nummer* 1-16
 	{
 		uint8_t lednr;
 		strncpy(test, wlan_string+3, strlen(wlan_string+3)); 
 		lednr = (uint8_t)atoi(test);
 		ledc_led_setpwm(LEDC1, lednr, 255);
 	}
-	
-	else if(!strncmp(wlan_string, "l0:", 3))	// <l0:*name*> Licht ausschalten: Licht *Nummer* 1-16
+
+	else if(!strncmp_P(wlan_string, txtp_cmd_l0, 3))	// "l0:" - <l0:*name*> Licht ausschalten: Licht *Nummer* 1-16
 	{
 		uint8_t lednr;
 		strncpy(test, wlan_string+3, strlen(wlan_string+3)); 
@@ -107,22 +107,51 @@ void befehl_auswerten(void)
 		ledc_led_setpwm(LEDC1, lednr, 0);
 	}
 
-	else if(!strcmp(wlan_string, "reset"))	// reset for starting bootloader
+	else if(!strcmp_P(wlan_string, txtp_cmd_reset))	// "reset" for starting bootloader
 	{
 		cli();
 		wdt_enable(WDTO_15MS);	// activate watchdog timer and
 		while (1);				// wait for watchdog reset
 	}
 
+	else if(!strncmp_P(wlan_string, txtp_cmd_onameset, 9))	// "onameset:" set owner name in eeprom
+	{
+		static char datatxt[EEDATA_MAXSTRLEN];
+
+		if (!strncmp_P(wlan_string+9, txtp_cmddata_start, 6))	// "start:"
+		{
+			memset(datatxt, 0, EEDATA_MAXSTRLEN);	// string leeren
+			strncpy(datatxt, wlan_string+15, strlen(wlan_string+15));
+
+		}
+		else if(!strncmp_P(wlan_string+9, txtp_cmddata_start, 4))	// "add"
+		{
+			strlcat(datatxt, wlan_string+13, EEDATA_MAXSTRLEN); // (will LÃ¤nge des kompletten destination buffers+0!!)
+		}
+		else if(!strncmp_P(wlan_string+9, txtp_cmddata_start, 4))	// "end"
+		{
+			strlcat(datatxt, wlan_string+13, EEDATA_MAXSTRLEN);
+			//datatxt enthÃ¤lt jetzt den kompletten Namen!
+			eeprom_update_oname(datatxt);
+			// TODO: wird im Betrieb auch benÃ¶tigt??
+		}
+
+	}
+	
+	
 	// TODO: switch Befehle zum Schalten freier GPIOs
-	
-	
+
+
+
+
+
+
 	else
 	{
 		cmd_found = 0;
-		// Bearbeite ungültiges Kommando
-		// TODO: was machen? Rückmeldung unbekannter Befehl
-		alivecount--;	// den Zähler korrigieren (wurde bereits im vorhinein erhöhlt) - es werden nur gültige Befehle gezählt!!
+		// Bearbeite ungÃ¼ltiges Kommando
+		// TODO: was machen? RÃ¼ckmeldung unbekannter Befehl
+		alivecount--;	// den ZÃ¤hler korrigieren (wurde bereits im vorhinein erhÃ¶hlt) - es werden nur gÃ¼ltige Befehle gezÃ¤hlt!!
 	}
 
 	/*
