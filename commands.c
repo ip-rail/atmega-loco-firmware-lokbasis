@@ -122,7 +122,6 @@ void befehl_auswerten(void)
 		{
 			memset(datatxt, 0, EEDATA_MAXSTRLEN);	// string leeren
 			strncpy(datatxt, wlan_string+15, strlen(wlan_string+15));
-
 		}
 		else if(!strncmp_P(wlan_string+9, txtp_cmddata_start, 4))	// "add"
 		{
@@ -131,13 +130,36 @@ void befehl_auswerten(void)
 		else if(!strncmp_P(wlan_string+9, txtp_cmddata_start, 4))	// "end"
 		{
 			strlcat(datatxt, wlan_string+13, EEDATA_MAXSTRLEN);
-			//datatxt enthÃ¤lt jetzt den kompletten Namen!
+			//datatxt enthält jetzt den kompletten Namen!
 			eeprom_update_oname(datatxt);
-			// TODO: wird im Betrieb auch benÃ¶tigt??
+			// TODO: wird im Betrieb auch benötigt??
 		}
-
 	}
-	
+
+	else if(!strncmp_P(wlan_string, txtp_cmd_nameset, 8))	// "nameset:" set owner name in eeprom
+	{
+		static char datatxt[EEDATA_MAXSTRLEN];
+
+		if (!strncmp_P(wlan_string+8, txtp_cmddata_start, 6))	// "start:"
+		{
+			memset(datatxt, 0, EEDATA_MAXSTRLEN);	// string leeren
+			strncpy(datatxt, wlan_string+14, strlen(wlan_string+14));
+		}
+		else if(!strncmp_P(wlan_string+8, txtp_cmddata_start, 4))	// "add"
+		{
+			strlcat(datatxt, wlan_string+12, EEDATA_MAXSTRLEN); // (will LÃ¤nge des kompletten destination buffers+0!!)
+		}
+		else if(!strncmp_P(wlan_string+8, txtp_cmddata_start, 4))	// "end"
+		{
+			strlcat(datatxt, wlan_string+12, EEDATA_MAXSTRLEN);
+			//datatxt enthält jetzt den kompletten Namen!
+			eeprom_update_lname(datatxt);
+			// TODO: wird im Betrieb auch benötigt??
+		}
+	}
+
+	else if(!strcmp_P(wlan_string, txtp_cmd_hwget))	{ uart0_puts_p(txtp_hwi); }	//  für das UC02 Board mit "<hwi:01>" antworten
+
 	
 	// TODO: switch Befehle zum Schalten freier GPIOs
 

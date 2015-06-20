@@ -58,6 +58,8 @@ extern const char txtp_sd[];
 extern const char txtp_pong[];
 extern const char txtp_default_lok_name[];
 extern const char txtp_default_owner_name[];
+extern const char txtp_hwi[];
+
 //Befehle im Flash
 extern const char txtp_cmd_stop[];
 extern const char txtp_cmd_off[];
@@ -71,8 +73,10 @@ extern const char txtp_cmd_l1[];
 extern const char txtp_cmd_l0[];
 extern const char txtp_cmd_reset[];
 extern const char txtp_cmd_onameset[];
+extern const char txtp_cmd_nameset[];
 extern const char txtp_cmddata_start[];
 extern const char txtp_cmddata_add[];
 extern const char txtp_cmddata_end[];
+extern const char txtp_cmd_hwget[];
 
 #endif /* MAIN_H_ */

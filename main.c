@@ -2,8 +2,8 @@
  *
  * main.c
  *
- *	Version: 0.2
- *  Created on: 14.12.2014 - 28.05.2015
+ *	Version: 0.04
+ *  Created on: 14.12.2014 - 20.06.2015
  *  Author: Michael Brunnbauer
  */
 
@@ -25,6 +25,7 @@
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
 #include <util/twi.h>	// für I2C
+#include <avr/wdt.h>			// watchdog
 
 #include "lokbasis_hwdef.h"		// Hardware-Definitionen für die verschiedenen Boards
 #include "main.h"
@@ -35,7 +36,7 @@
 #include "speed.h"				// Geschwindigkeit anpassen
 #include "ledc.h"				// LED-Controller
 #include "i2cmaster.h"			// I2C Funktionen
-#include <avr/wdt.h>			// watchdog
+
 
 
 // Watchdog Deaktivierung im Startcode. Notwendig, da Watchdog für Software-Reset (->Bootloader) verwendet wird
@@ -92,11 +93,13 @@ const char dev_swversion[] PROGMEM = "0.04";   		// -> keine Änderung durch User
 const char txtp_cmdend[] PROGMEM = ">";						// Befehlsende-Zeichen
 const char txtp_errmotor[] PROGMEM = "<error:motor:";		// Motor-Error
 const char txtp_sd[] PROGMEM = "<sd:";						// Speed-Rückmeldung
+const char txtp_iam[] PROGMEM = "<iam:";					// Meldung mit Lok-Namen
 const char txtp_pong[] PROGMEM = "<pong>";					// Antwort für den ping Befe
-const char txtp_default_lok_name[] PROGMEM = "Lok X";			// Standardwert für EEData Lokname
-const char txtp_default_owner_name[] PROGMEM = "TheOwner";		// Standardwert für EEData Owner-Name
+const char txtp_default_lok_name[] PROGMEM = "Lok X";		// Standardwert für EEData Lokname
+const char txtp_default_owner_name[] PROGMEM = "TheOwner";	// Standardwert für EEData Owner-Name
+const char txtp_hwi[] PROGMEM = "<hwi:01> ";				// Antwort auf <hwget> 01 = Board UC02 (ATMega2561)
 
-// Befehle
+// Befehle - Strings für auswertung, daher ohne spitze Klammern
 const char txtp_cmd_stop[] PROGMEM = "stop";
 const char txtp_cmd_off[] PROGMEM = "off";
 const char txtp_cmd_stopall[] PROGMEM = "stopall";
@@ -109,10 +112,11 @@ const char txtp_cmd_l1[] PROGMEM = "l1:";
 const char txtp_cmd_l0[] PROGMEM = "l0:";
 const char txtp_cmd_reset[] PROGMEM = "reset";
 const char txtp_cmd_onameset[] PROGMEM = "onameset:";
+const char txtp_cmd_nameset[] PROGMEM = "nameset:";
 const char txtp_cmddata_start[] PROGMEM = "start:";
 const char txtp_cmddata_add[] PROGMEM = "add:";
 const char txtp_cmddata_end[] PROGMEM = "end:";
-
+const char txtp_cmd_hwget[] PROGMEM = "hwget";
 
 const char txtp_cmd_[] PROGMEM = "";
 
@@ -141,6 +145,9 @@ int main(void)
 	setbit(DDRD,PD6);	// Pin als Ausgang definieren - für Testsignal
 	setbit(DDRD,PD7);	// Pin als Ausgang definieren - für Testsignal
 	
+	InitServo();
+
+
 	//init_gpios();		// frei verfügbare GPIOs als Ausgang definieren
 
 	sei();	// Interrupts aufdrehen
