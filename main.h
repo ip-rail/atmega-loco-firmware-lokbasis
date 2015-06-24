@@ -9,18 +9,18 @@
 #define MAIN_H_
 
 
-//#define LOKBASIS_NO_TEST	// für Testmodus remmen - diverse Sicherheitsabfragen werden für's Testen deaktiviert
+//#define LOKBASIS_NO_TEST	// fÃ¼r Testmodus remmen - diverse Sicherheitsabfragen werden fÃ¼r's Testen deaktiviert
 
 
-// Macros für Bit-Operationen
+// Macros fÃ¼r Bit-Operationen
 #define setbit(P,BIT) 	((P) |= (1<<(BIT)))
 #define clearbit(P,BIT)	((P) &= ~(1<<(BIT)))
 
-#define UART_MAXSTRLEN 32		// maximal erlaubte Länge eines Befehls "<*>" incl. <>
+#define UART_MAXSTRLEN 32		// maximal erlaubte LÃ¤nge eines Befehls "<*>" incl. <>
 
-#define ALIVE_INTERVAL 5		//Prüfintervall = 5 Sekunden! -> Lok stoppt nach 5sek herrenloser Fahrt
+#define ALIVE_INTERVAL 5		//PrÃ¼fintervall = 5 Sekunden! -> Lok stoppt nach 5sek herrenloser Fahrt
 
-// Statusdefinitionen für Interrupts und Main-Schleife
+// Statusdefinitionen fÃ¼r Interrupts und Main-Schleife
 #define STATE_1X_PRO_SEK 1		// Timer meldet sich 1x pro Sekunde
 #define STATE_5X_PRO_SEK 2		// Timer meldet sich 5x pro Sekunde
 #define STATE_3 4				//
@@ -31,34 +31,42 @@
 #define STATE_8 128				//
 
 
-// definitionen für Steuerung
-#define RICHTUNG_VW	1		// Richtung: vorwärts = 1
-#define RICHTUNG_RW	0		// Richtung: rückwärts = 0
+// definitionen fÃ¼r Steuerung
+#define RICHTUNG_VW	1		// Richtung: vorwÃ¤rts = 1
+#define RICHTUNG_RW	0		// Richtung: rÃ¼ckwÃ¤rts = 0
 
 // extern verwendete Variablen
-extern volatile unsigned char state;		// Status-Variable für Interrupts und Main-Schleife
-extern unsigned int speed;					// Geschwindigkeitswert der an die H-Brücke ausgegeben wird (momentaner Wert)
-extern unsigned int speed_soll;				// Geschwindigkeitsvorgabe vom Steuerungsgerät (Wert, der erreicht werden soll)
+extern volatile unsigned char state;		// Status-Variable fÃ¼r Interrupts und Main-Schleife
+extern unsigned int speed;					// Geschwindigkeitswert der an die H-BrÃ¼cke ausgegeben wird (momentaner Wert)
+extern unsigned int speed_soll;				// Geschwindigkeitsvorgabe vom SteuerungsgerÃ¤t (Wert, der erreicht werden soll)
 extern unsigned char richtung;
 extern unsigned char richtung_soll;
 extern unsigned char speedstep_korrektur;
-extern volatile unsigned char motor_reg;	// Variable für Motor-Regelung ein/aus (auch für isr verwendet)
+extern volatile unsigned char motor_reg;	// Variable fÃ¼r Motor-Regelung ein/aus (auch fÃ¼r isr verwendet)
 extern uint8_t motorerror;					// Errorcode von Motorcontroller: 0 = kein Error
-extern unsigned char alivecount;			// zählt die empfangen Meldungen der Gegenstelle (wird zyklisch ausgewertet)
+extern unsigned char alivecount;			// zÃ¤hlt die empfangen Meldungen der Gegenstelle (wird zyklisch ausgewertet)
 extern volatile char alone;
 extern char wlan_string[UART_MAXSTRLEN+1];  // globaler String zum Abspeichern des vom WLAN empfangen Strings in read_wlan
+
+extern volatile uint8_t adcchannel;		// aktueller ADC channel 0-7
+extern uint8_t adc_mask;					// die benÃ¼tzten ADC Channels (siehe auch: adc_used in eedata.c), kein volatile, da sich der Wert im Betrieb nicht Ã¤ndert
+extern volatile uint8_t adcreadcount;		// counter fÃ¼r LesevorgÃ¤nge pro ADC channel
+extern volatile unsigned int adcvalue[8][4];
+
 
 extern const char dev_swname[];
 extern const char dev_swversion[];
 
-//Strings im Flash für CMD-Rückmeldungen über WLAN
+//Strings im Flash fÃ¼r CMD-RÃ¼ckmeldungen Ã¼ber WLAN
 extern const char txtp_cmdend[];
+extern const char txtp_cmdtrenn[];
 extern const char txtp_errmotor[];
 extern const char txtp_sd[];
 extern const char txtp_pong[];
 extern const char txtp_default_lok_name[];
 extern const char txtp_default_owner_name[];
 extern const char txtp_hwi[];
+extern const char txtp_cmd_servoi[];
 
 //Befehle im Flash
 extern const char txtp_cmd_stop[];
@@ -78,5 +86,7 @@ extern const char txtp_cmddata_start[];
 extern const char txtp_cmddata_add[];
 extern const char txtp_cmddata_end[];
 extern const char txtp_cmd_hwget[];
+extern const char txtp_cmd_servoget[];
+extern const char txtp_cmd_servoset[];
 
 #endif /* MAIN_H_ */

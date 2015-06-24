@@ -8,9 +8,9 @@
  */
 
 #include <avr/io.h>
-//#include <string.h>		// für "strcmp"
-//#include <stdlib.h>		// für "itoa"
-#include <util/delay.h>	// für delay_ms()
+//#include <string.h>		// fÃ¼r "strcmp"
+//#include <stdlib.h>		// fÃ¼r "itoa"
+#include <util/delay.h>	// fÃ¼r delay_ms()
 //#include <avr/interrupt.h>
 //#include <avr/pgmspace.h>
 
@@ -53,7 +53,7 @@ void ledcontrol_init(uint8_t slaveaddr)
 		i2c_write(LEDC_MODE2_BLINK);		//Mode2 auf Default setzen (0x00: group controll= dimming, 0x10: group controll= blinking)
 		for(i=0;i<16;i++)
 		{
-			i2c_write(0);					//alle PWM Kanäle auf 0 (Helligkeit)
+			i2c_write(0);					//alle PWM KanÃ¤le auf 0 (Helligkeit)
 		}
 		i2c_write(0xff);						//PWM Helligkeit fuer Gruppen auf maximum
 		i2c_write(11);						//Gruppen-Blinkfrequenzregister auf 11

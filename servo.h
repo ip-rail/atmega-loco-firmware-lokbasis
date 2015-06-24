@@ -27,12 +27,12 @@
 
 extern uint8_t servo_mode;				// 0: für jedes Servosignal wird ein GPIO verwendet (vordefinieren welche!). 1: alle Signale nur an 1 GPIO ausgeben (Port,Pin mit Index 0), an dem ein Kreiszähler-IC hängt
 extern uint8_t servo_count;				// wieviele Servosignale ausgeben (max. 6-8?)
-extern uint8_t servoPort[SERVOCOUNTMAX];	//Port und Pin der GPIOs, die für Servos verwendet werden (verwendet werden Index 0 bis SERVOCOUNTMAX-1)
+extern uint8_t servoPort[SERVOCOUNTMAX];	//Port (Buchstabe Großschrift) und Pin-Nummer der GPIOs, die für Servos verwendet werden (verwendet werden Index 0 bis SERVOCOUNTMAX-1)
 extern uint8_t servoPin[SERVOCOUNTMAX];	//Port und Pin gehören je Index zusammen
 extern uint8_t servo_sleep;				// grober Wert, wieviel von den 20ms Servo-Intervall gewarret werden muss
-extern volatile unsigned int ServoValue[SERVOCOUNTMAX];
+extern volatile unsigned int servoValue[SERVOCOUNTMAX];
 
 
-
+extern void initServo();
 
 #endif /* SERVO_H_ */

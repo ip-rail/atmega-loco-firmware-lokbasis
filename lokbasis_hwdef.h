@@ -4,7 +4,7 @@
  *  Created on: 22.10.2011 - 08.05.2015
  *      Author: Michael Brunnbauer
  *
- *  Hardwaredefinitionen für Lokbasis Hardware
+ *  Hardwaredefinitionen fÃ¼r Lokbasis Hardware
  *
  *
  *
@@ -23,10 +23,10 @@
 #define HW_UC02				// WLANcroc MC-Board
 //#define WLAN_WIZNET		// Wiznet Wiz610wi
 #define WLAN_RASPI			// Raspi
-#define PHB01_MOTOR1		// Motorcontroller PHB01: H-Brücke wird für Motor 1 verwendet
-//#define PHB01_MOTOR2		// Motorcontroller PHB01: eine 2. H-Brücke wird für Motor 2 verwendet
-#define UART_NR_WLAN 0		// uart0 für WLAN
-//#define UART_NR_RFID 1	// uart1 für RFID
+#define PHB01_MOTOR1		// Motorcontroller PHB01: H-BrÃ¼cke wird fÃ¼r Motor 1 verwendet
+//#define PHB01_MOTOR2		// Motorcontroller PHB01: eine 2. H-BrÃ¼cke wird fÃ¼r Motor 2 verwendet
+#define UART_NR_WLAN 0		// uart0 fÃ¼r WLAN
+//#define UART_NR_RFID 1	// uart1 fÃ¼r RFID
 //#define LEDC_TLC59116	1	//LED-Controller TLC59116 ist vorhanden (es kann derzeit nur einer davon verwendet werden. entweder PCA9622 oder TLC59116!!)
 #define LEDC_PCA9622	1	//LED-Controller PCA9622 ist vorhanden
 
@@ -39,7 +39,7 @@
 //UC02 Wlancroc-Standard MC Modul ATMega2561
 #if defined( HW_UC02 )
 
-// Testpin für Toggle-Signal 0,5Hz
+// Testpin fÃ¼r Toggle-Signal 0,5Hz
 #define DDR_TESTSIGNAL	DDRD
 #define PORT_TESTSIGNAL	PORTD
 #define TESTSIGNAL	PD7
@@ -74,7 +74,7 @@
 #define ADC_SCHIENE PF0 		// Input, ADC Schienenspannung
 
 
-// GPIOs frei für Schalt-Funktionen (Licht usw.)
+// GPIOs frei fÃ¼r Schalt-Funktionen (Licht usw.)
 #define GPIO_USABLE_PORT_A	0
 #define GPIO_USABLE_PORT_B	143
 #define GPIO_USABLE_PORT_C	255
@@ -115,7 +115,7 @@
 	
 #endif	// LEDC_PCA9622
 
-#define LEDC_MODE1	1		// Mode 1: ALLCALL aktiv(1) (nur bit0 auf 1, alle andern auf 0), für beide Controller gleich
+#define LEDC_MODE1	1		// Mode 1: ALLCALL aktiv(1) (nur bit0 auf 1, alle andern auf 0), fÃ¼r beide Controller gleich
 
 // Adressen der Register im PCA9622 und TLC59116
 #define PCA9622_ADDR_MODE1			0x00
@@ -137,7 +137,7 @@
 // UART Definitionen
 #define UART_BAUDRATE_RFID	9600	// RFID-Verbindung
 //#define UART_BAUDRATE_WLAN	115200	// WLAN-Verbindung
-#define UART_BAUDRATE_WLAN	38400	// WLAN-Verbindung - nur für test
+#define UART_BAUDRATE_WLAN	38400	// WLAN-Verbindung - nur fÃ¼r test
 
 #define UART_SETTING_RFID ((F_CPU/16L/UART_BAUDRATE_RFID)-1)	// Berechnung der UART Konfigurationsparameter
 #define UART_SETTING_WLAN ((F_CPU/16L/UART_BAUDRATE_WLAN)-1)

@@ -6,9 +6,9 @@
  */
 
 #include <avr/io.h>
-#include <string.h>		// für "strcmp"
-#include <stdlib.h>		// für "itoa"
-#include <util/delay.h>	// für delay_ms()
+#include <string.h>		// fÃ¼r "strcmp"
+#include <stdlib.h>		// fÃ¼r "itoa"
+#include <util/delay.h>	// fÃ¼r delay_ms()
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 
@@ -20,8 +20,8 @@
 
 //----------------------------------------------------------------------------------------------
 // set_speed
-// setzt als einzige Funktion den PWM Wert für die Geschwindigkeit!!!
-// und glättet die Geschwindigkeitssprüge vom Steuerungsgerät bei Start / Stop / starken Beschleunigungen
+// setzt als einzige Funktion den PWM Wert fÃ¼r die Geschwindigkeit!!!
+// und glÃ¤ttet die GeschwindigkeitssprÃ¼ge vom SteuerungsgerÃ¤t bei Start / Stop / starken Beschleunigungen
 //----------------------------------------------------------------------------------------------
 
 void set_speed(void)
@@ -32,33 +32,33 @@ void set_speed(void)
 	if (motorerror > 0) { speed_soll = 0; } // wenn eine Motor-Error gemeldet wird -> Geschwindigkeit auf 0
 
 
-	//---------- Anfangszustand: Speedänderung von 0 -> Richtung am Motor setzen --------------------
-	// Richtungswechsel nur bei Speed == 0, dafür immer, wenn Speed-Änderung vorliegt
+	//---------- Anfangszustand: SpeedÃ¤nderung von 0 -> Richtung am Motor setzen --------------------
+	// Richtungswechsel nur bei Speed == 0, dafÃ¼r immer, wenn Speed-Ã„nderung vorliegt
 	if ((speed == 0) & (speed_soll != 0))
 	{
-		if(richtung_soll == RICHTUNG_VW)		// vorwärts
+		if(richtung_soll == RICHTUNG_VW)		// vorwÃ¤rts
 		{
 
 #if defined( HW_TESTBOARD2 ) || defined( PHB01_MOTOR1 )
-			setbit(PORT_MOTOR, MOTOR1_DIR);	// Motor1 vorwärts
+			setbit(PORT_MOTOR, MOTOR1_DIR);	// Motor1 vorwÃ¤rts
 #endif
 
 #if defined( PHB01_MOTOR2 )
-			setbit(PORT_MOTOR, MOTOR2_DIR);	// Motor2 (eigene H-Brücke) vorwärts
+			setbit(PORT_MOTOR, MOTOR2_DIR);	// Motor2 (eigene H-BrÃ¼cke) vorwÃ¤rts
 #endif
 
 
 			richtung = RICHTUNG_VW;
 		}
-		else if(richtung_soll == RICHTUNG_RW)	// rückwärts
+		else if(richtung_soll == RICHTUNG_RW)	// rÃ¼ckwÃ¤rts
 		{
 
 #if defined( HW_TESTBOARD2 ) || defined( PHB01_MOTOR1 )
-			clearbit(PORT_MOTOR, MOTOR1_DIR);	// Motor1 rückwärts
+			clearbit(PORT_MOTOR, MOTOR1_DIR);	// Motor1 rÃ¼ckwÃ¤rts
 #endif
 
 #if defined( PHB01_MOTOR2 )
-			clearbit(PORT_MOTOR, MOTOR2_DIR);	// Motor2 (eigene H-Brücke) vorwärts
+			clearbit(PORT_MOTOR, MOTOR2_DIR);	// Motor2 (eigene H-BrÃ¼cke) vorwÃ¤rts
 #endif
 
 			richtung = RICHTUNG_RW;
@@ -66,8 +66,8 @@ void set_speed(void)
 	}
 
 
-	//----- Geschwindigkeitsänderung ------------------------------------------------------------------------------
-	// TODO: Geschwindigkeitsänderung sollte verfeinert werden!
+	//----- GeschwindigkeitsÃ¤nderung ------------------------------------------------------------------------------
+	// TODO: GeschwindigkeitsÃ¤nderung sollte verfeinert werden!
 
 	if (richtung != richtung_soll)	// Richtungswechsel: speed auf 0 reduzieren
 	{
@@ -91,22 +91,22 @@ void set_speed(void)
 
 
 	//---- PWM-Wert setzen -------------------------------------------------------------------------
-	// wird nur hier ausgeführt, sonst nirgends mehr!!!!!
+	// wird nur hier ausgefÃ¼hrt, sonst nirgends mehr!!!!!
 
 
-#if defined( MC_INV_PWM_4_REV )	// PWM-Wert muß für Rückwärts invertiert werden
+#if defined( MC_INV_PWM_4_REV )	// PWM-Wert muÃŸ fÃ¼r RÃ¼ckwÃ¤rts invertiert werden
 
-	if (richtung == RICHTUNG_VW) // vorwärts
+	if (richtung == RICHTUNG_VW) // vorwÃ¤rts
 	{
 		OCR1A = (speed>>speedstep_korrektur);
 		OCR1B = (speed>>speedstep_korrektur);
 		pwm =   (speed>>speedstep_korrektur);
 	}
-	else if (richtung == RICHTUNG_RW)	// rückwärts
+	else if (richtung == RICHTUNG_RW)	// rÃ¼ckwÃ¤rts
 	{
 		switch (speedstep_korrektur)
 		{
-		case 0:	// TOP = 1000 (nicht 1023 wg. dreistelligem speed-wert im command!)	// ab v0.15 auch bis 1023 möglich!
+		case 0:	// TOP = 1000 (nicht 1023 wg. dreistelligem speed-wert im command!)	// ab v0.15 auch bis 1023 mÃ¶glich!
 			OCR1A = 1023 - speed;
 			OCR1B = 1023 - speed;
 			pwm =   1023 - speed;
@@ -125,7 +125,7 @@ void set_speed(void)
 			break;
 		}
 	}
-#else	// gleicher PWM-Wert für alle Richtungen
+#else	// gleicher PWM-Wert fÃ¼r alle Richtungen
 	MOTOR1_OCR = (speed>>speedstep_korrektur);
 
 	#if defined( PHB01_MOTOR2 )

@@ -3,13 +3,13 @@
  *
  *  Created on: 29.01.2011 - 02.05.2015
  *      Author: Michael Brunnbauer
- *      Funktionen für die verschiedenen WLAN-Module
+ *      Funktionen fÃ¼r die verschiedenen WLAN-Module
  */
 
 #include <avr/io.h>
-#include <string.h>		// für "strcmp"
-#include <stdlib.h>		// für "itoa"
-#include <util/delay.h>	// für delay_ms()
+#include <string.h>		// fÃ¼r "strcmp"
+#include <stdlib.h>		// fÃ¼r "itoa"
+#include <util/delay.h>	// fÃ¼r delay_ms()
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 
@@ -21,17 +21,17 @@
 #include "funktionen.h"
 
 
-// check_wlan_cmd(): Funktion für zyklischen Check nach WLAN-Befehlen für die Hauptschleife.
-// Übernimmt die vorhandene Daten pro Befehl (also Text zwischen < und >) nach wlan_string
-// Es wird nicht auf einen vollständigen Befehl gewartet.
-// Ist ein Befehl vollständig, wird die Ausführung des Befehls aufgerufen -> befehl_auswerten()
+// check_wlan_cmd(): Funktion fÃ¼r zyklischen Check nach WLAN-Befehlen fÃ¼r die Hauptschleife.
+// Ãœbernimmt die vorhandene Daten pro Befehl (also Text zwischen < und >) nach wlan_string
+// Es wird nicht auf einen vollstÃ¤ndigen Befehl gewartet.
+// Ist ein Befehl vollstÃ¤ndig, wird die AusfÃ¼hrung des Befehls aufgerufen -> befehl_auswerten()
 
 void check_wlan_cmd()
 {
 	static unsigned char cmdstate = WLANCMD_NONE;	// Status des aktuellen Befehls
 	static unsigned char cindex = 0;		// Position in wlan_string (global)
 	unsigned int c;						// zum Verarbeiten des aktuellen Zeichens
-	unsigned char exit;					// für while-Schleifen-Ausstieg
+	unsigned char exit;					// fÃ¼r while-Schleifen-Ausstieg
 	unsigned char uarterror;			// UART Empfangsfehler
 
 	exit = 0;
@@ -80,11 +80,11 @@ void check_wlan_cmd()
 				if (d == 60)	// > Befehl beginnt
 				{
 
-					cmdstate = WLANCMD_STARTED;	// ab nun Zeichen nach wlan_string übernehmen
+					cmdstate = WLANCMD_STARTED;	// ab nun Zeichen nach wlan_string Ã¼bernehmen
 					cindex = 0;
 					memset(wlan_string, 0, UART_MAXSTRLEN+1);
 				}
-				else if (d == 62)	// > abschließendes Zeichen wurde empfangen
+				else if (d == 62)	// > abschlieÃŸendes Zeichen wurde empfangen
 				{
 					//PORT_TESTSIGNAL ^= (1<<TESTSIGNAL);	// Signale bei jedem Durchlauf togglen
 					if (cmdstate == WLANCMD_STARTED) { befehl_auswerten(); }
@@ -92,7 +92,7 @@ void check_wlan_cmd()
 				}
 				else
 				{
-					if (cmdstate == WLANCMD_STARTED)	// Zeichen in Befehl übernehmen
+					if (cmdstate == WLANCMD_STARTED)	// Zeichen in Befehl Ã¼bernehmen
 					{
 						if (cindex < UART_MAXSTRLEN)
 						{

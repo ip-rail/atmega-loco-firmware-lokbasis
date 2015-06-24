@@ -14,31 +14,31 @@
 #include "eedata.h"
 #include "servo.h"
 
-
+/*
 // EEPROM data structure - nur zu Definitionszwecken
 typedef struct {
   uint32_t magic_code;	//	0xAABBCCDD
-  uint16_t eedata_version;	// fortlaufende Nummer bei ƒnderung
+  uint16_t eedata_version;	// fortlaufende Nummer bei √Ñnderung
   //--- HW-Config
   uint8_t  adc_used;	//ADC0-7 bitmask: 0=unused, 1=used
-  uint8_t  servo_mode;	// 0: f¸r jedes Servosignal wird ein GPIO verwendet (vordefinieren welche!). 1: alle Signale nur an 1 GPIO ausgeben (Port,Pin mit Index 0), an dem ein Kreisz‰hler-IC h‰ngt
+  uint8_t  servo_mode;	// 0: f√ºr jedes Servosignal wird ein GPIO verwendet (vordefinieren welche!). 1: alle Signale nur an 1 GPIO ausgeben (Port,Pin mit Index 0), an dem ein Kreisz√§hler-IC h√§ngt
   uint8_t  servo_count;	// wieviele Servosignale ausgeben (max. 6-8?)
-  uint8_t servoPort[SERVOCOUNTMAX];	//Port und Pin der GPIOs, die f¸r Servos verwendet werden (verwendet werden Index 0 bis SERVOCOUNTMAX-1)
-  uint8_t servoPin[SERVOCOUNTMAX];	//Port und Pin gehˆren je Index zusammen
+  uint8_t servoPort[SERVOCOUNTMAX];	//Port-Adresse und Pin-Nummer der GPIOs, die f√ºr Servos verwendet werden (verwendet werden Index 0 bis SERVOCOUNTMAX-1)
+  uint8_t servoPin[SERVOCOUNTMAX];	//Port und Pin geh√∂ren je Index zusammen
   // TODO Servo Anschlagskorrektur top/bottom ?? oder nur im Controller?
 
-  //uint8_t  gpios_b;		// GPIOs Port B: 1: verwendet, 0: nicht verwendet
-  //uint8_t  gpios_d;		//
-  //uint8_t  gpios_e;		//
-  //uint8_t  gpios_g;		//
-  // gpios m¸ssen noch mit den vordefinierten anders-verwendeten Pins ver-UNDet werden! und verwendete Servo-Pins ber¸cksichtigen, dann stehen sie als GPIO auch nicht mehr zur Verf¸gung!
-  // hier wird nur gespeichert, welche freien GPIOs der User verwenden will - vordefiniert ist bereits, was programmintern anders verwendet wird und daher sowieso nicht zur Verf¸gung steht
+  uint8_t  gpios_b;		// GPIOs Port B: 1: verwendet, 0: nicht verwendet
+  uint8_t  gpios_d;		//
+  uint8_t  gpios_e;		//
+  uint8_t  gpios_g;		//
+  // gpios m√ºssen noch mit den vordefinierten anders-verwendeten Pins ver-UNDet werden! und verwendete Servo-Pins ber√ºcksichtigen, dann stehen sie als GPIO auch nicht mehr zur Verf√ºgung!
+  // hier wird nur gespeichert, welche freien GPIOs der User verwenden will - vordefiniert ist bereits, was programmintern anders verwendet wird und daher sowieso nicht zur Verf√ºgung steht
 
   // String data
   char lok_name[41];		// Standardwert "Lok X"
   char owner_name[41];		// Standardwert "TheOwner"
 
-} EEPROMdata;
+} EEPROMdata; */
 
 
 
@@ -58,7 +58,7 @@ void eeprom_checkversion()
 }
 
 
-//EEData mit Defaultwerten bef¸llen
+//EEData mit Defaultwerten bef√ºllen
 void init_eeprom()
 {
 	char datatxt[EEDATA_MAXSTRLEN];
@@ -68,7 +68,19 @@ void init_eeprom()
 	eeprom_update_word((uint16_t *)EEDATA_ADR_VERSION, 1);	// Data version 1
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_ADCUSED, 1);	// only use ADC0
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_SERVO_MODE, 0);	// a GPIO for each Servo
-	eeprom_update_byte((uint8_t *)EEDATA_ADR_SERVO_COUNT, 0);	// no Servos used -> serov port,pin data doesn't matter!
+	//eeprom_update_byte((uint8_t *)EEDATA_ADR_SERVO_COUNT, 0);	// no Servos used -> servo port,pin data doesn't matter!
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_SERVO_COUNT, 2);// TODO: Testdaten
+
+	servoPort[0] = 'B';	// TODO: nur test
+	servoPin[0]  = 1<<PB0;	// TODO: nur test
+	servoPort[1] = 'B';	// TODO: nur test
+	servoPin[1]  = 1<<PB1;	// TODO: nur test
+	eeprom_update_ServoGPIO(servoPort, servoPin);	// TODO: nur test
+
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_B, 0);	// Defaultwert 0: keine GPIOs verwenden
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_D, 0);
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_E, 0);
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_G, 0);
 
 	memset(datatxt, 0, EEDATA_MAXSTRLEN);	// string leeren
 	strncpy_P(datatxt, txtp_default_lok_name, 5);
@@ -87,7 +99,7 @@ void eeprom_update_oname(const char *data)
 
 	if (datasize < (EEDATA_MAXSTRLEN))
 	{
-		eeprom_update_block((const void *)data, (void *)EEDATA_ADR_OWNERNAME, datasize+1);	// datasize+1 -> abschlieﬂendes 0-Byte mitkopieren!! (ob danach noch Mist steht, falls der String nicht die volle reservierte L‰nge ausf¸llt, ist egal
+		eeprom_update_block((const void *)data, (void *)EEDATA_ADR_OWNERNAME, datasize+1);	// datasize+1 -> abschlie√üendes 0-Byte mitkopieren!! (ob danach noch Mist steht, falls der String nicht die volle reservierte L√§nge ausfÔøΩllt, ist egal
 	}
 }
 
@@ -97,10 +109,88 @@ void eeprom_update_lname(const char *data)
 
 	if (datasize < (EEDATA_MAXSTRLEN))
 	{
-		eeprom_update_block((const void *)data, (void *)EEDATA_ADR_LOKNAME, datasize+1);	// datasize+1 -> abschlieﬂendes 0-Byte mitkopieren!! (ob danach noch Mist steht, falls der String nicht die volle reservierte L‰nge ausf¸llt, ist egal
+		eeprom_update_block((const void *)data, (void *)EEDATA_ADR_LOKNAME, datasize+1);	// datasize+1 -> abschlie√üendes 0-Byte mitkopieren!! (ob danach noch Mist steht, falls der String nicht die volle reservierte L√§nge ausf√ºllt, ist egal
 	}
 }
 
 
+void eeprom_getServoMode()
+{
+	servo_mode = eeprom_read_byte((const uint8_t *)EEDATA_ADR_SERVO_MODE);
+}
 
+void eeprom_update_ServoMode(const uint8_t mode)
+{
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_SERVO_MODE, mode);
+}
+
+void eeprom_getServoCount()
+{
+	servo_count = eeprom_read_byte((const uint8_t *)EEDATA_ADR_SERVO_COUNT);
+}
+
+void eeprom_update_ServoCount(const uint8_t count)
+{
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_SERVO_COUNT, count);
+}
+
+void eeprom_getServoGPIO()
+{
+	eeprom_read_block((void *)&servoPort, (const void *)EEDATA_ADR_SERVO_PORT, SERVOCOUNTMAX);
+	eeprom_read_block((void *)&servoPin, (const void *)EEDATA_ADR_SERVO_PIN, SERVOCOUNTMAX);
+}
+
+
+void eeprom_update_ServoGPIO(const void *ports, const void *pins)	// ports und pins array
+{
+	eeprom_update_block((const void *)ports, (void *)EEDATA_ADR_SERVO_PORT, SERVOCOUNTMAX);
+	eeprom_update_block((const void *)pins, (void *)EEDATA_ADR_SERVO_PIN, SERVOCOUNTMAX);
+}
+
+
+uint8_t eeprom_getADCGPIO()
+{
+	return eeprom_read_byte((const uint8_t *)EEDATA_ADR_ADCUSED);
+}
+
+void eeprom__update_ADCGPIO(const uint8_t adcmask)
+{
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_ADCUSED, adcmask);
+}
+
+
+
+uint8_t eeprom_getGPIO(char port)	// ACHTUNG: Gro√übuchstaben!!
+{
+	uint8_t value = 0;
+
+	switch (port)
+	{
+	case 'B':
+		value = eeprom_read_byte((const uint8_t *)EEDATA_ADR_GPIOS_B);
+		break;
+
+	case 'D':
+		value = eeprom_read_byte((const uint8_t *)EEDATA_ADR_GPIOS_D);
+		break;
+
+	case 'E':
+		value = eeprom_read_byte((const uint8_t *)EEDATA_ADR_GPIOS_E);
+		break;
+
+	case 'G':
+		value = eeprom_read_byte((const uint8_t *)EEDATA_ADR_GPIOS_G);
+		break;
+	}
+
+	return value;
+}
+
+void eeprom_update_GPIO(uint8_t maskB, uint8_t maskD, uint8_t maskE, uint8_t maskG)
+{
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_B, maskB);
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_D, maskD);
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_E, maskE);
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_G, maskG);
+}
 

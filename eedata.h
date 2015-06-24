@@ -10,7 +10,7 @@
 #define EEDATA_H_
 
 
-#define EEDATA_MAXSTRLEN 41		// max. Länge für Lok-Namen, Owner-Namen (inkl. Leerzeichen)
+#define EEDATA_MAXSTRLEN 41		// max. Lï¿½nge fï¿½r Lok-Namen, Owner-Namen (inkl. Leerzeichen)
 
 #define EEDATA_ADR_START 			0		// Startadresse der Daten im EEPROM
 #define EEDATA_ADR_VERSION			EEDATA_ADR_START + 4
@@ -19,10 +19,15 @@
 #define EEDATA_ADR_SERVO_COUNT		EEDATA_ADR_SERVO_MODE + 1
 #define EEDATA_ADR_SERVO_PORT		EEDATA_ADR_SERVO_COUNT + 1
 #define EEDATA_ADR_SERVO_PIN 		EEDATA_ADR_SERVO_PORT + SERVOCOUNTMAX
-#define EEDATA_ADR_LOKNAME			EEDATA_ADR_SERVO_PIN + SERVOCOUNTMAX
+
+#define EEDATA_ADR_GPIOS_B			EEDATA_ADR_SERVO_PIN + SERVOCOUNTMAX
+#define EEDATA_ADR_GPIOS_D			EEDATA_ADR_GPIOS_B + 1
+#define EEDATA_ADR_GPIOS_E			EEDATA_ADR_GPIOS_D + 1
+#define EEDATA_ADR_GPIOS_G			EEDATA_ADR_GPIOS_E + 1
+#define EEDATA_ADR_LOKNAME			EEDATA_ADR_GPIOS_G + 1
 #define EEDATA_ADR_OWNERNAME		EEDATA_ADR_LOKNAME + EEDATA_MAXSTRLEN
 
-#define EE_MAGIC_CODE	0xAABBCCDD	// Kennzeichnung, dass EEPROM bereits gültige Daten enthält
+#define EE_MAGIC_CODE	0xAABBCCDD	// Kennzeichnung, dass EEPROM bereits gï¿½ltige Daten enthï¿½lt
 #define EEDATA_VERSION	1			// aktuelle Version der Daten(struktur)
 
 
@@ -30,5 +35,15 @@ extern void eeprom_checkversion();
 extern void init_eeprom();
 extern void eeprom_update_oname(const char *data);
 extern void eeprom_update_lname(const char *data);
+extern void eeprom_getServoMode();
+extern void eeprom_update_ServoMode(const uint8_t mode);
+extern void eeprom_getServoCount();
+extern void eeprom_update_ServoCount(const uint8_t count);
+extern void eeprom_getServoGPIO();
+extern void eeprom_update_ServoGPIO(const void *ports, const void *pins);
+extern uint8_t  eeprom_getADCGPIO();
+extern void  eeprom__update_ADCGPIO(const uint8_t adcmask);
+extern uint8_t eeprom_getGPIO(char port);
+extern void eeprom_update_GPIO(uint8_t maskB, uint8_t maskD, uint8_t maskE, uint8_t maskG);
 
 #endif /* EEDATA_H_ */

@@ -22,6 +22,7 @@
 #include "funktionen.h"	// Funktionen für Hauptschleife und commands.c
 #include "ledc.h"
 #include "eedata.h"
+#include "servo.h"
 
 //-----------------------------------------------------------------------------------------
 // befehl_auswerten: wlan_string wird ausgewertet und der Befehl umgesetzt
@@ -130,9 +131,9 @@ void befehl_auswerten(void)
 		else if(!strncmp_P(wlan_string+9, txtp_cmddata_start, 4))	// "end"
 		{
 			strlcat(datatxt, wlan_string+13, EEDATA_MAXSTRLEN);
-			//datatxt enth�lt jetzt den kompletten Namen!
+			//datatxt enthält jetzt den kompletten Namen!
 			eeprom_update_oname(datatxt);
-			// TODO: wird im Betrieb auch ben�tigt??
+			// TODO: wird im Betrieb auch benötigt??
 		}
 	}
 
@@ -152,15 +153,69 @@ void befehl_auswerten(void)
 		else if(!strncmp_P(wlan_string+8, txtp_cmddata_start, 4))	// "end"
 		{
 			strlcat(datatxt, wlan_string+12, EEDATA_MAXSTRLEN);
-			//datatxt enth�lt jetzt den kompletten Namen!
+			//datatxt enth�lt jetzt den kompletten Namen!
 			eeprom_update_lname(datatxt);
-			// TODO: wird im Betrieb auch ben�tigt??
+			// TODO: wird im Betrieb auch benötigt??
 		}
 	}
 
-	else if(!strcmp_P(wlan_string, txtp_cmd_hwget))	{ uart0_puts_p(txtp_hwi); }	//  f�r das UC02 Board mit "<hwi:01>" antworten
+	else if(!strcmp_P(wlan_string, txtp_cmd_hwget))	{ uart0_puts_p(txtp_hwi); }	//  für das UC02 Board mit "<hwi:01>" antworten
+
+	else if(!strcmp_P(wlan_string, txtp_cmd_servoget))		// servoget - Servo-Konfiguration wird angefordert
+	{
+		uint8_t i;
+		char strbuffer[10];
+		strlcpy_P(test, txtp_cmd_servoi, 9);	// Rückmeldung per <servoi:mode:count:*port0**pin0*:..>
+		itoa(servo_mode, strbuffer, 10);
+		strlcat(test, strbuffer, UART_MAXSTRLEN+1);	// will länge des kompletten "test" buffers+0
+		strlcat_P(test, txtp_cmdtrenn, UART_MAXSTRLEN+1);
+		itoa(servo_count, test+9, 10);
+
+		for( i = 0; i < servo_count; i++ )
+		{
+			strlcat_P(test, txtp_cmdtrenn, UART_MAXSTRLEN+1);
+			strbuffer[0] = servoPort[i];
+			strbuffer[1] = servoPin[i] + 48;	// einfache ASCII-Konvertierung "0" ist ASCII-Code 48
+			strbuffer[1] = 0;					//String Terminierung
+			strlcat(test, strbuffer, UART_MAXSTRLEN+1);
+		}
+		strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1);
+		uart0_puts(test);
+
+	}
+
+	else if(!strcmp_P(wlan_string, txtp_cmd_servoset))		// servoset  zB: "servoset:0:6:B0:B1:B2:B3:B7:D4"
+	{
+		uint8_t mode, count, i;
+		mode = wlan_string[9] - 48;	// mögliche Werte: 0 oder 1
+		count = wlan_string[11];	// mögliche Werte: 0 bis SERVOCOUNTMAX
+
+		if ((mode > 1) || (count > SERVOCOUNTMAX)) { return; }// Daten stimmen nicht
+
+		servo_mode = mode;
+		servo_count = count;
+		char* checkstring;
+		checkstring = wlan_string + 12;
+
+		for( i = 0; i < count; i++ )
+		{
+			checkstring++;	// ':' ignorieren
+			servoPort[i] = *checkstring++;
+			servoPin[i] = (*checkstring++) - 48;
+		}
+
+		//Saving new settings to EEPROM
+		eeprom_update_ServoMode(mode);
+		eeprom_update_ServoCount(count);
+		eeprom_update_ServoGPIO(servoPort, servoPin);
+
+		//TODO: neu initialisieren? (zumindest teilweise weil sich womöglich GPIOs geändert haben? -> checken)
+	}
 
 	
+	// TODO: ADCGPIO (adc_used) set,get,rückmeldung
+	// TODO: GPIO set,get,rückmeldung
+
 	// TODO: switch Befehle zum Schalten freier GPIOs
 
 
