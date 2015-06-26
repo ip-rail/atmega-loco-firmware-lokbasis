@@ -80,14 +80,8 @@ uint8_t motorerror = 0;					// Errorcode von Motorcontroller: 0 = kein Error
 volatile uint8_t adcchannel = 0;		// aktueller ADC channel 0-7
 uint8_t adc_mask = 0;					// die benützten ADC Channels (siehe auch: adc_used in eedata.c), kein volatile, da sich der Wert im Betrieb nicht ändert
 volatile uint8_t adcreadcount = 0;		// counter für Lesevorgänge pro ADC channel
-volatile unsigned int adcvalue[8][4] = { {0,0,0,0},	// 8 channels, 4 Werte werden gelesen (zum mitteln) // Spar-Version: 8+4 statt 8x4
-                     	 	 	  	     {0,0,0,0},
-                     	 	 	  	     {0,0,0,0},
-                     	 	 	  	     {0,0,0,0},
-                     	 	 	  	     {0,0,0,0},
-                     	 	 	  	     {0,0,0,0},
-                     	 	 	  	     {0,0,0,0},
-                     	 	 	  	     {0,0,0,0} };
+unsigned int adcvalue[8];				// ADC Daten der 8 channels (Wert der letzten Auswertung)
+volatile unsigned int adcvalue_work;	// ADC Wert der aktuellen Messungen: 4 Werte werden gelesen (addiert) und bei der Auswertung dann gemittelt
 
 // frei verwendbar GPIOs
 uint8_t  gpios_b;		// GPIOs Port B: 1: verwendet, 0: nicht verwendet
@@ -110,6 +104,7 @@ const char txtp_default_lok_name[] PROGMEM = "Lok X";		// Standardwert für EEDa
 const char txtp_default_owner_name[] PROGMEM = "TheOwner";	// Standardwert für EEData Owner-Name
 const char txtp_hwi[] PROGMEM = "<hwi:01> ";				// Antwort auf <hwget> 01 = Board UC02 (ATMega2561)
 const char txtp_cmd_servoi[] PROGMEM = "<servoi:";			// Antwort auf <servoget>
+const char txtp_cmd_ui[] PROGMEM = "<ui:";					// Rückmeldung Spannungswerte
 
 // Befehle - Strings für auswertung, daher ohne spitze Klammern
 const char txtp_cmd_stop[] PROGMEM = "stop";
@@ -182,9 +177,6 @@ int main(void)
 
 
 
-
-
-
 	while (1)	// Hauptschleife (endlos)
 	{
 		loop_count++;	// Zähler für Hauptschleife
@@ -248,7 +240,8 @@ int main(void)
 			log_puts_P("\r\n");
 			*/
 
-			// TODO: Spannungsmeldung Schiene, Akku und ev. Motoren
+			// Spannungsmeldung Schiene, Akku und ev. Motoren
+			if (adc_mask != 0) { adc_msg_all(test); }	// alle ADC-Werte rückmelden
 
 			last_loop_count = loop_count;	// ermittelten loopcount sichern
 			loop_count = 0;	// loopcount sekündlich zurücksetzen -> ergibt loops/s
@@ -257,6 +250,8 @@ int main(void)
 			sei();
 
 		}
+
+		if (state & STATE_ADC_CHECK) { check_adc(); }		// fertige ADC-Messungen auswerten
 
 
 		if (uart0_available() > 0) { check_wlan_cmd(); }	// checken, ob WLAN-Daten vorhanden sind (wenn ja -> verarbeiten)
@@ -292,7 +287,7 @@ ISR(TIMER5_COMPA_vect) {
 	{
 		state |= STATE_1X_PRO_SEK;	// state setzen
 		alivesecs++;
-		timer5_count = 0;	// es wird nur bis 30 gezählt -> 1 Sekunde, dann wieder bei 0 anfangen
+		timer5_count = 0;
 	}
 
 }

@@ -23,7 +23,7 @@
 // Statusdefinitionen für Interrupts und Main-Schleife
 #define STATE_1X_PRO_SEK 1		// Timer meldet sich 1x pro Sekunde
 #define STATE_5X_PRO_SEK 2		// Timer meldet sich 5x pro Sekunde
-#define STATE_3 4				//
+#define STATE_ADC_CHECK  4		// ADC-Daten bereit zum Auswerten
 #define STATE_4 8				//
 #define STATE_5 16				//
 #define STATE_6 32				//
@@ -51,8 +51,8 @@ extern char wlan_string[UART_MAXSTRLEN+1];  // globaler String zum Abspeichern d
 extern volatile uint8_t adcchannel;		// aktueller ADC channel 0-7
 extern uint8_t adc_mask;					// die benützten ADC Channels (siehe auch: adc_used in eedata.c), kein volatile, da sich der Wert im Betrieb nicht ändert
 extern volatile uint8_t adcreadcount;		// counter für Lesevorgänge pro ADC channel
-extern volatile unsigned int adcvalue[8][4];
-
+extern unsigned int adcvalue[8];
+extern volatile unsigned int adcvalue_work;
 
 extern const char dev_swname[];
 extern const char dev_swversion[];
@@ -67,6 +67,7 @@ extern const char txtp_default_lok_name[];
 extern const char txtp_default_owner_name[];
 extern const char txtp_hwi[];
 extern const char txtp_cmd_servoi[];
+extern const char txtp_cmd_ui[];
 
 //Befehle im Flash
 extern const char txtp_cmd_stop[];

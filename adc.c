@@ -7,19 +7,12 @@
 
 
 #include <avr/io.h>
-//#include <string.h>		// für "strcmp"
-//#include <stdlib.h>		// für "itoa"
-//#include <util/delay.h>	// für delay_ms()
 #include <avr/interrupt.h>
-//#include <avr/pgmspace.h>
 
 #include "lokbasis_hwdef.h"
 #include "eedata.h"
 #include "main.h"
 #include "adc.h"
-//#include "servo.h"
-//#include "uart.h"
-//#include "funktionen.h"
 
 
 // ADC initialisieren
@@ -56,8 +49,14 @@ void init_adc()
 	clearbit(ADMUX,REFS1);	// AVCC (5V) Referenz
 	setbit(ADMUX,REFS0);	// AVCC (5V) Referenz
 
+	uint8_t i;
+	for( i = 0; i < 8; i++ )
+	{
+		adcvalue[i] = 0xffff;	// ffff = kein gültiger Wert vorhanden
+	}
 
 
+	adcreadcount = 0;
 	// Kanal wählen Beispiel:
 	adcchannel = 0;	// ADC0
 
@@ -67,17 +66,74 @@ void init_adc()
 		if (adcchannel > 7) { break; }
 	}
 
-
-	ADMUX = (ADMUX & ~(0x1F)) | (adcchannel & 0x1F);
+	ADMUX = (ADMUX & ~(0x1F)) | (adcchannel & 0x1F);	// Kanal auswählen
 	ADCSRB &= ~((1<< MUX5));	//oberstes bit MUX5 (in anderem Register) ist für single channel ADC0-7 immer 0! //MUX5 =3 (bit 3)
 
 	setbit(ADCSRA,ADEN);	// ADC enable
 
 	//setbit(ADCSRA,ADIE);	// ADC interrupt enable
+
 	//setbit(ADCSRA,ADSC);	// start (each) ADC conversion
 	//erste Messung immer ignorieren
 
+}
 
+// alle ADC-Daten zurückmelden <ui:*nummer*:*wert*>
+// txtbuffer muss UART_MAXSTRLEN+1 groß sein
+void adc_msg_all(char *txtbuffer)
+{
+	uint8_t i;
+	char valbuffer[10];
+	for( i = 0; i < 8; i++ )
+	{
+		if ((1<<adcchannel) & adc_mask)	// wenn channel verwendet wird
+		{
+			memset(txtbuffer, 0, UART_MAXSTRLEN+1);	// text leeren
+			strlcpy_P(txtbuffer, txtp_cmd_ui, 5);
+			itoa(i, valbuffer, 10);
+			strlcat(txtbuffer, valbuffer, UART_MAXSTRLEN+1);	// will länge des kompletten "test" buffers+0
+			strlcat_P(txtbuffer, txtp_cmdtrenn, UART_MAXSTRLEN+1);
+			itoa(adcvalue[i], valbuffer, 10);
+			strlcat(txtbuffer, valbuffer, UART_MAXSTRLEN+1);
+			strlcat_P(txtbuffer, txtp_cmdend, UART_MAXSTRLEN+1);
+			uart0_puts(txtbuffer);
+		}
+
+	}
+
+}
+
+// ADC-Daten auswerten (nachdem alle Messungen des aktuellen Channels durchgeführt wurden)
+// und auf nächsten Channel umkonfigurieren und Messung starten
+void check_adc()
+{
+	// gemessene Daten auswerten
+
+	adcvalue[adcchannel] = adcvalue_work >> 2;	// die 4 aufaddierten Werte wieder durch 4 dividieren
+
+	// nächsten Channel vorbereiten und Messung starten
+	adcvalue_work = 0;
+	adcreadcount = 0;
+	adcchannel++;
+	if (adcchannel > 7) { adcchannel = 0; }
+
+	while(!((1<<adcchannel) & adc_mask))// nicht verwendete Kanäle überspringen
+	{
+		adcchannel++;
+		if (adcchannel > 7)
+		{
+			adcchannel = 0;
+			break;
+		}
+	}
+
+	ADMUX = (ADMUX & ~(0x1F)) | (adcchannel & 0x1F);	// nächsten Channel einstellen
+
+	cli();
+	state &= ~STATE_ADC_CHECK;	// state-flag zurücksetzen
+	sei();
+
+	setbit(ADCSRA,ADSC);	// start next conversion
 }
 
 
@@ -88,7 +144,6 @@ ISR(ADC_vect) {
 
 	unsigned int val;
 
-	//TODO: ACHTUNG: alles noch alt: muss noch geändert werden (ist aus "lokbasis1 - Kopie v0.7")
 	// var:
 	// volatile uint8_t adcchannel = 0;			// aktueller ADC channel (0-7)
 	// volatile uint8_t adcreadcount = 0;		// counter für Lesevorgänge pro ADC channel
@@ -102,40 +157,16 @@ ISR(ADC_vect) {
 	// alt: nach der Methode kracht es!!! Reboots osw!! solbad der Interrupt deaktiviert ist, passt alles!!
 
 
-
 	val = ADC;	//Wert muss immer gelesen werden
 
-	if (adcreadcount > 0)
-	{
-		adcvalue[adcchannel][adcreadcount-1] = val;
-	}
+	if (adcreadcount > 0) { adcvalue_work += val; }	// erste Messung immer ignorieren, die weitern 4 aufaddieren (zur späteren Mittelung)
 
 	adcreadcount++;
 
-	if (adcreadcount > 4)
-	{
-		adcreadcount = 0;
-		adcchannel++;
-		if (adcchannel > 7) { adcchannel = 0; }
-
-		while(!((1<<adcchannel) & adc_mask))// nicht verwendete Kanäle überspringen
-		{
-			adcchannel++;
-			if (adcchannel > 7)
-			{
-				adcchannel = 0;
-				break;
-			}
-		}
-
-		ADMUX = (ADMUX & ~(0x1F)) | (adcchannel & 0x1F);	// nächsten Channel einstellen
-	}
+	if (adcreadcount > 4) { state |= STATE_ADC_CHECK; }	// state setzen: Messdaten können ausgewertet werden
 
 
 
-	setbit(ADCSRA,ADSC);	// start next conversion
-
-
-}
+}	// ISR end
 
 
