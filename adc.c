@@ -6,12 +6,16 @@
  */
 
 
+#include <stdlib.h>		// für "itoa"
+#include <string.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/pgmspace.h>
 
 #include "lokbasis_hwdef.h"
 #include "eedata.h"
 #include "main.h"
+#include "uart.h"
 #include "adc.h"
 
 
