@@ -15,6 +15,7 @@
 #include "lokbasis_hwdef.h"
 #include "eedata.h"
 #include "main.h"
+#include "wlan.h"
 #include "uart.h"
 #include "adc.h"
 
@@ -100,7 +101,7 @@ void adc_msg_all(char *txtbuffer)
 			itoa(adcvalue[i], valbuffer, 10);
 			strlcat(txtbuffer, valbuffer, UART_MAXSTRLEN+1);
 			strlcat_P(txtbuffer, txtp_cmdend, UART_MAXSTRLEN+1);
-			uart0_puts(txtbuffer);
+			wlan_puts(txtbuffer);
 		}
 
 	}

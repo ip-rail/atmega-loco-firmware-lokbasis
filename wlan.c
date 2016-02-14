@@ -21,6 +21,28 @@
 #include "funktionen.h"
 
 
+// Zwischenlösung Auswahl UART für WLAN (0 / 1)
+// WLAN_UART_NR definiert in lokbasis_hwdef.h
+
+void wlan_puts_p(const char *progmem_s )
+{
+	#if defined( WLAN_UART_NR )	// WLAN_UART_NR = 1
+		uart1_puts_p(progmem_s);
+	#else // WLAN_UART_NR = 0
+		void uart0_puts_p(progmem_s);
+	#endif	// WLAN_UART_NR
+
+}
+
+void wlan_puts(const char *s )
+{
+	#if defined( WLAN_UART_NR )	// WLAN_UART_NR = 1
+		uart1_puts(s);
+	#else // WLAN_UART_NR = 0
+		uart0_puts(s);
+	#endif	// WLAN_UART_NR
+}
+
 // check_wlan_cmd(): Funktion für zyklischen Check nach WLAN-Befehlen für die Hauptschleife.
 // Übernimmt die vorhandene Daten pro Befehl (also Text zwischen < und >) nach wlan_string
 // Es wird nicht auf einen vollständigen Befehl gewartet.

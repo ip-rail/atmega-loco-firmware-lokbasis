@@ -18,6 +18,7 @@
 #include "eedata.h"
 #include "main.h"
 #include "servo.h"
+#include "wlan.h"
 #include "uart.h"
 #include "funktionen.h"
 
@@ -167,7 +168,7 @@ void init_pwm(char freq_pwm)	// Timer 1 für Motor-PWM initialisieren
 
 
 	// DDR_MOTOR_PWM |= (1<<MOTOR1_PWM) | (1<<MOTOR2_PWM);	// als Ausgänge setzen
-	DDR_MOTOR_PWM |= (1<<MOTOR1_PWM);	// als Ausgänge setzen - nur 1 H-Brücke
+	//DDR_MOTOR_PWM |= (1<<MOTOR1_PWM);	// als Ausgänge setzen - nur 1 H-Brücke
 
 	#if defined( PHB01_MOTOR1 )
 		DDR_MOTOR_PWM |= (1<<MOTOR1_PWM);	// als Ausgang setzen - 1. H-Brücke
@@ -331,7 +332,7 @@ void checkMotorStatus()
 			strlcpy_P(test, txtp_errmotor, 14);
 			ltoa(motorerror, test+13, 10);
 			strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1); // will Länge des kompletten "test" buffers+0
-			uart0_puts(test);
+			wlan_puts(test);
 		}
 	}
 } // end checkMotorStatus()

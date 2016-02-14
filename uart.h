@@ -2,6 +2,7 @@
 #define UART_H
 
 
+
 /************************************************************************
 Title:    Interrupt UART library with receive/transmit circular buffers
 Author:   Andy Gock
@@ -117,7 +118,7 @@ Date        Description
 
 /* Enable USART 1, 2, 3 as required */
 #define USART0_ENABLED
-//#define USART1_ENABLED
+#define USART1_ENABLED
 //#define USART2_ENABLED 
 //#define USART3_ENABLED
 

@@ -165,7 +165,7 @@ int main(void)
 	// ========================  Hardware Initialisierung abgeschlossen  ================================================
 
 
-	uart0_puts("<MC start>");
+	wlan_puts("<MC start>");
 
 	setbit(PORTD,PD6);	// TEST: auf HI
 
@@ -214,7 +214,7 @@ int main(void)
 			strlcpy_P(test, txtp_sd, 5);	// Rückmeldung der Geschwindigkeit	//bei der Länge immer 0-Zeichen mitzählen!
 			itoa(speed, test+4, 10);
 			strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1);	// will länge des kompletten "test" buffers+0
-			uart0_puts(test);
+			wlan_puts(test);
 
 			//TODO Test Servo
 			if (servoValue[0] == CENTER) { servoValue[0] = 0; }
@@ -229,7 +229,7 @@ int main(void)
 			strlcpy_P(test, txtp_errmotor, 14);
 			ltoa(motorerror, test+13, 10);
 			strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1); // will Länge des kompletten "test" buffers+0
-			uart0_puts(test);
+			wlan_puts(test);
 			*/
 
 

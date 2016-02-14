@@ -90,7 +90,7 @@ void befehl_auswerten(void)
 		sei();
 	}
 
-	else if(!strcmp_P(wlan_string, txtp_cmd_ping))	{ uart0_puts_p(txtp_pong); }	// "ping" - mit "<pong>" antworten
+	else if(!strcmp_P(wlan_string, txtp_cmd_ping))	{ wlan_puts_p(txtp_pong); }	// "ping" - mit "<pong>" antworten
 
 	else if(!strncmp_P(wlan_string, txtp_cmd_l1, 3))	// "l1:" - <l1:*nummer*> Licht einschalten: Licht *Nummer* 1-16
 	{
@@ -159,7 +159,7 @@ void befehl_auswerten(void)
 		}
 	}
 
-	else if(!strcmp_P(wlan_string, txtp_cmd_hwget))	{ uart0_puts_p(txtp_hwi); }	//  für das UC02 Board mit "<hwi:01>" antworten
+	else if(!strcmp_P(wlan_string, txtp_cmd_hwget))	{ wlan_puts_p(txtp_hwi); }	//  für das UC02 Board mit "<hwi:01>" antworten
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_servoget))		// servoget - Servo-Konfiguration wird angefordert
 	{
@@ -180,7 +180,7 @@ void befehl_auswerten(void)
 			strlcat(test, strbuffer, UART_MAXSTRLEN+1);
 		}
 		strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1);
-		uart0_puts(test);
+		wlan_puts(test);
 
 	}
 
