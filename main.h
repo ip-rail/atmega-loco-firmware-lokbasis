@@ -62,6 +62,7 @@ extern const char txtp_cmdend[];
 extern const char txtp_cmdtrenn[];
 extern const char txtp_errmotor[];
 extern const char txtp_sd[];
+extern const char txtp_iam[];
 extern const char txtp_pong[];
 extern const char txtp_default_lok_name[];
 extern const char txtp_default_owner_name[];

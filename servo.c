@@ -28,7 +28,7 @@
  uint8_t servo_count;	// wieviele Servosignale ausgeben (max. 6-8?)
  uint8_t servoPort[SERVOCOUNTMAX];	//Port und Pin der GPIOs, die für Servos verwendet werden (verwendet werden Index 0 bis SERVOCOUNTMAX-1)
  uint8_t servoPin[SERVOCOUNTMAX];	//Port und Pin gehören je Index zusammen
- uint8_t servo_sleep;		// grober Wert, wieviel von den 20ms Servo-Intervall gewarret werden muss
+ uint8_t servo_sleep;		// grober Wert, wieviel von den 20ms Servo-Intervall gewartet werden muss
  // diese Variablen ändern sich nach der Initialisierung nicht mehr, daher kein "volatile" nötig
 
 //const uint8_t ServoOutput[SERVOCOUNT] = { 1<<PB1, 1<<PB2 };	// kein "volatile" nötig, da sich das nicht mehr ändert (-> const)

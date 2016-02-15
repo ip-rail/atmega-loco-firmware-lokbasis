@@ -137,7 +137,7 @@ void befehl_auswerten(void)
 		}
 	}
 
-	else if(!strncmp_P(wlan_string, txtp_cmd_nameset, 8))	// "nameset:" set owner name in eeprom
+	else if(!strncmp_P(wlan_string, txtp_cmd_nameset, 8))	// "nameset:" set loco name in eeprom
 	{
 		static char datatxt[EEDATA_MAXSTRLEN];
 
