@@ -68,7 +68,11 @@ void init_adc()
 	// den ersten verwendeten Kanal suchen
 	while(!((1<<adcchannel) & adc_mask)) {
 		adcchannel++;
-		if (adcchannel > 7) { break; }
+		if (adcchannel > 7)
+		{
+			adcchannel = 0;	// damit kein Unglück geschieht (adcchannel darf nicht > 7 werden)
+			break;
+		}
 	}
 
 	ADMUX = (ADMUX & ~(0x1F)) | (adcchannel & 0x1F);	// Kanal auswählen
@@ -158,8 +162,6 @@ ISR(ADC_vect) {
 	// 3 oder 5 werte lesen, den 1. verwerfen
 	// danach auf nächsten port umstellen
 	// dann in der Hauptschleife den Wert mitteln
-
-	// alt: nach der Methode kracht es!!! Reboots osw!! solbad der Interrupt deaktiviert ist, passt alles!!
 
 
 	val = ADC;	//Wert muss immer gelesen werden

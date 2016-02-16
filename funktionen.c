@@ -119,8 +119,6 @@ void init_motorctrl(void)
 		PORT_MOTOR &= ~(1<<MOTOR1_DIR);   	// Motor-Richtung auf 0 // bei diesem Controller: vorwärts
 		PORT_MOTOR |= (1<<MOTOR1_RESET);	// Reset auf HI
 
-		MOTOR1_OCR = 0;
-
 	#endif
 
 	#if defined( PHB01_MOTOR2 )
@@ -131,9 +129,7 @@ void init_motorctrl(void)
 		PORT_MOTOR &= ~(1<<MOTOR2_DIR);   	// Motor-Richtung auf 0 // bei diesem Controller: vorwärts
 		PORT_MOTOR |= (1<<MOTOR2_RESET);	// Reset auf HI
 
-		MOTOR2_OCR = 0;
 	#endif
-
 
 		// Timer 1 für Motor-PWM initialisieren --------------------------------------
 		init_pwm(8);	// Mode 8: 15656Hz 9bit prescaler 1  - Timer 1 für Motor-PWM initialisieren

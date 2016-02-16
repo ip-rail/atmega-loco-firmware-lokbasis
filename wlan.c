@@ -29,7 +29,7 @@ void wlan_puts_p(const char *progmem_s )
 	#if defined( WLAN_UART_NR )	// WLAN_UART_NR = 1
 		uart1_puts_p(progmem_s);
 	#else // WLAN_UART_NR = 0
-		void uart0_puts_p(progmem_s);
+		uart0_puts_p(progmem_s);
 	#endif	// WLAN_UART_NR
 
 }

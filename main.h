@@ -90,5 +90,6 @@ extern const char txtp_cmddata_end[];
 extern const char txtp_cmd_hwget[];
 extern const char txtp_cmd_servoget[];
 extern const char txtp_cmd_servoset[];
+extern const char txtp_cmd_gpioc[];
 
 #endif /* MAIN_H_ */

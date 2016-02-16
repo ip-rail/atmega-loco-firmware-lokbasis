@@ -213,13 +213,25 @@ void befehl_auswerten(void)
 	}
 
 	
+	// <gpioc:pin:wert> pin: 0-7, wert: 0 oder 1
+	else if(!strncmp_P(wlan_string, txtp_cmd_gpioc, 6))	// "gpioc:" - <gpioc:pin:wert> pin: 0-7, wert: 0 oder 1
+	{
+		uint8_t pinnr,pinval;
+		strncpy(test, wlan_string+6, 1);	//nur 1 Zeichen auswerten (pin)
+		pinnr = (uint8_t)atoi(test);
+
+		memset(test, 0, UART_MAXSTRLEN+1);	// text wieder leeren
+		strncpy(test, wlan_string+8, 1);	//nur 1 Zeichen auswerten (wert)
+		pinval = (uint8_t)atoi(test);
+
+		if (pinval) { PORTC |= (1<<pinnr); }	// Pin auf 1 setzen
+		else { PORTC &= ~(1<<pinnr); }			// Pin auf 0 setzen
+
+	}
+
 	// TODO: ADCGPIO (adc_used) set,get,rückmeldung
-	// TODO: GPIO set,get,rückmeldung
-
+	// TODO: konfigurierbare GPIOs set,get,rückmeldung
 	// TODO: switch Befehle zum Schalten freier GPIOs
-
-
-
 
 
 

@@ -126,6 +126,7 @@ const char txtp_cmddata_end[] PROGMEM = "end:";
 const char txtp_cmd_hwget[] PROGMEM = "hwget";
 const char txtp_cmd_servoget[] PROGMEM = "servoget";
 const char txtp_cmd_servoset[] PROGMEM = "servoset:";
+const char txtp_cmd_gpioc[] PROGMEM = "gpioc:";
 
 
 int main(void)
@@ -158,7 +159,8 @@ int main(void)
 	initServo();
 
 
-	//init_gpios();		// frei verfügbare GPIOs als Ausgang definieren (nach Servos, ADC)
+	init_gpios();		// frei verfügbare GPIOs als Ausgang definieren (nach Servos, ADC)
+						//falls nichts Anderes konfiguriert wird, wird nur der komplette Port C als Ausgang definiert
 
 	sei();	// Interrupts aufdrehen
 
@@ -253,9 +255,12 @@ int main(void)
 
 		if (state & STATE_ADC_CHECK) { check_adc(); }		// fertige ADC-Messungen auswerten
 
-
-		if (uart0_available() > 0) { check_wlan_cmd(); }	// checken, ob WLAN-Daten vorhanden sind (wenn ja -> verarbeiten)
-
+		// checken, ob WLAN-Daten vorhanden sind (wenn ja -> verarbeiten)
+		#if defined( WLAN_UART_NR )	// WLAN_UART_NR = 1
+			if (uart1_available() > 0) { check_wlan_cmd(); }
+		#else // WLAN_UART_NR = 0
+			if (uart0_available() > 0) { check_wlan_cmd(); }
+		#endif	// WLAN_UART_NR
 
 	}	// Ende Hauptschleife (endlos)
 

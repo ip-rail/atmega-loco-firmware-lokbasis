@@ -115,7 +115,6 @@ Date        Description
  */
 
 
-
 /* Enable USART 1, 2, 3 as required */
 #define USART0_ENABLED
 #define USART1_ENABLED
