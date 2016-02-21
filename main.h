@@ -91,5 +91,6 @@ extern const char txtp_cmd_hwget[];
 extern const char txtp_cmd_servoget[];
 extern const char txtp_cmd_servoset[];
 extern const char txtp_cmd_gpioc[];
+extern const char txtp_cmd_fpwmset[];
 
 #endif /* MAIN_H_ */

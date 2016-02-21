@@ -34,7 +34,6 @@ void befehl_auswerten(void)
 	char test[UART_MAXSTRLEN+1];
 	memset(test, 0, UART_MAXSTRLEN+1);	// text leeren
 	alivecount++;	// Meldungen von der Gegenstelle zählen (wenn es kein gültiger Befehl war, am Ende wieder --;
-
 	uint8_t cmd_found = 1;	// checken, ob cmd behandelt wurde oder nicht
 
 	if(!strcmp_P(wlan_string, txtp_cmd_stop))	// "stop"
@@ -90,7 +89,10 @@ void befehl_auswerten(void)
 		sei();
 	}
 
-	else if(!strcmp_P(wlan_string, txtp_cmd_ping))	{ wlan_puts_p(txtp_pong); }	// "ping" - mit "<pong>" antworten
+	else if(!strcmp_P(wlan_string, txtp_cmd_ping))	// "ping" - mit "<pong>" antworten
+	{
+		wlan_puts_p(txtp_pong);
+	}
 
 	else if(!strncmp_P(wlan_string, txtp_cmd_l1, 3))	// "l1:" - <l1:*nummer*> Licht einschalten: Licht *Nummer* 1-16
 	{
@@ -153,7 +155,7 @@ void befehl_auswerten(void)
 		else if(!strncmp_P(wlan_string+8, txtp_cmddata_start, 4))	// "end"
 		{
 			strlcat(datatxt, wlan_string+12, EEDATA_MAXSTRLEN);
-			//datatxt enth�lt jetzt den kompletten Namen!
+			//datatxt enthält jetzt den kompletten Namen!
 			eeprom_update_lname(datatxt);
 			// TODO: wird im Betrieb auch benötigt??
 		}
@@ -228,6 +230,24 @@ void befehl_auswerten(void)
 		else { PORTC &= ~(1<<pinnr); }			// Pin auf 0 setzen
 
 	}
+
+	else if(!strncmp_P(wlan_string, txtp_cmd_fpwmset, 8))	// "fpwmset:"  PWM-Frequenz setzen
+	{
+		char pwmf = 0;
+		strncpy(test, wlan_string+8, 1);		// die einstellige Zahl rauskopiern
+		test[1] = (char) 0;	// string mit 0-Byte abschließen
+		pwmf = atoi(test);
+
+		cli();
+		speed_soll = 0;
+		sei();
+
+		if (speed != 0) { warte_ms(1000); }	// zur Sicherheit warten, bis Lok steht
+		init_pwm(pwmf);		// neuen PWM-Modus setzen
+	}
+
+
+
 
 	// TODO: ADCGPIO (adc_used) set,get,rückmeldung
 	// TODO: konfigurierbare GPIOs set,get,rückmeldung

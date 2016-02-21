@@ -65,7 +65,6 @@ void init_uart(uint8_t uartnr, const unsigned int uartsetting)
 
 		setbit(UCSR0B,RXEN0);	// empfangen einschalten
 		setbit(UCSR0B,TXEN0);	// senden einschalten
-		setbit(UCSR0B,RXCIE0);	// RX Interrupt einschalten
 		clearbit(UCSR0B,UCSZ02);// UCSZ02 -> 0 für 8bit
 
 		// Asynchron, 8N1
@@ -76,14 +75,13 @@ void init_uart(uint8_t uartnr, const unsigned int uartsetting)
 		clearbit(UCSR0C,UPM00);		// no parity
 		clearbit(UCSR0C,UPM01);
 		clearbit(UCSR0C,USBS0);		// 1 stopbit
-
+		setbit(UCSR0B,RXCIE0);	// RX Interrupt einschalten
 
 		break;
 
-#if defined( ATMEGA_USART1 )
+//#if defined( ATMEGA_USART1 )
 	case 1:
 
-		/* TODO: nur test
 		UART1_TxHead = 0;
 		UART1_TxTail = 0;
 		UART1_RxHead = 0;
@@ -91,12 +89,28 @@ void init_uart(uint8_t uartnr, const unsigned int uartsetting)
 
 		UBRR1H = (unsigned char) (uartsetting >> 8);	// Baudrate einstellen: H muss vor L geschrieben werden!!
 		UBRR1L = (unsigned char) (uartsetting);
+		/*
 		UCSR1B = (1<<RXEN1) | (1<<TXEN1);	// senden & empfangen einschalten
 		UCSR1C = (1<<UCSZ10) | (1<<UCSZ11);	// asynchron 8N1
 		UCSR1B |= (1<<RXCIE1);	// RX Interrupt einschalten
-		*/
+		 */
+		setbit(UCSR1B,RXEN1);	// empfangen einschalten
+		setbit(UCSR1B,TXEN1);	// senden einschalten
+		clearbit(UCSR1B,UCSZ12);// UCSZ12 -> 0 für 8bit
+
+		// Asynchron, 8N1
+		clearbit(UCSR1C,UMSEL11);	// asynchrone Übertragung
+		clearbit(UCSR1C,UMSEL10);	// asynchrone Übertragung
+		setbit(UCSR1C,UCSZ10);		// 8bit
+		setbit(UCSR1C,UCSZ11);
+		clearbit(UCSR1C,UPM10);		// no parity
+		clearbit(UCSR1C,UPM11);
+		clearbit(UCSR1C,USBS1);		// 1 stopbit
+		setbit(UCSR1B,RXCIE1);	// RX Interrupt einschalten
+
+
 		break;
-#endif // ATMEGA_USART1
+//#endif // ATMEGA_USART1
 
 	default:
 		break;
@@ -145,7 +159,7 @@ void init_pwm(char freq_pwm)	// Timer 1 für Motor-PWM initialisieren
 	speedstep_korrektur = 0;	// gibt an, ob speed *2 oder *4 genommen werden muss (8/9bit), globale varaible für speed-stellung
 	//clearbit(TIMSK1,OCIE1A);	// Compare Match Interrupt abdrehen (wird für Motor-Messung verwendet) - war für motor-mess-test
 
-	if ((freq_pwm < 1) | (freq_pwm > 9)) { freq_pwm = 1; }
+	if ((freq_pwm < 1) | (freq_pwm > 9)) { freq_pwm = 5; }
 
 	/*
 	Frequenztabelle (Phase correct PWM):
@@ -264,12 +278,13 @@ void init_pwm(char freq_pwm)	// Timer 1 für Motor-PWM initialisieren
 			speedstep_korrektur = 2;
 		break;
 
-		default:	// 122Hz 8bit:256, 10bit:64*
+		default:	// 1957Hz 9bit:8
 			setbit(TCCR1A,WGM11);
-			setbit(TCCR1A,WGM10);
-			clearbit(TCCR1B,CS12);		// prescaler = 64
-			setbit(TCCR1B,CS11);		// prescaler = 64
-			setbit(TCCR1B,CS10);		// prescaler = 64
+			clearbit(TCCR1A,WGM10);
+			clearbit(TCCR1B,CS12);		// prescaler = 8
+			setbit(TCCR1B,CS11);		// prescaler = 8
+			clearbit(TCCR1B,CS10);		// prescaler = 8
+			speedstep_korrektur = 1;
 		break;
 	}
 	// speed muss für 8bit/9bit pwm um 1 bzw. 2 bit geshiftet werden, damit der speedwert passt (also halbiert bzw. geviertelt) -> in set_speed()

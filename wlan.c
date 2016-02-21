@@ -64,7 +64,16 @@ void check_wlan_cmd()
 		// UART_NO_DATA is returned when no data is available.
 
 		uarterror = 0;
-		c = uart0_getc();
+		//c = uart0_getc();	//
+
+		#if defined( WLAN_UART_NR )	// WLAN_UART_NR = 1
+			c = uart1_getc();
+		#else // WLAN_UART_NR = 0
+			c = uart0_getc();
+		#endif	// WLAN_UART_NR
+
+
+
 
 		if ( c & UART_NO_DATA )	//no data available from UART
 		{
@@ -108,7 +117,6 @@ void check_wlan_cmd()
 				}
 				else if (d == 62)	// > abschließendes Zeichen wurde empfangen
 				{
-					//PORT_TESTSIGNAL ^= (1<<TESTSIGNAL);	// Signale bei jedem Durchlauf togglen
 					if (cmdstate == WLANCMD_STARTED) { befehl_auswerten(); }
 					cmdstate = WLANCMD_NONE;
 				}

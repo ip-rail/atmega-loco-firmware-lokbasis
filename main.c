@@ -45,7 +45,6 @@
 // Function Prototype
 void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
 
-
 // Function Implementation
 void wdt_init(void)
 {
@@ -95,14 +94,14 @@ const char dev_swversion[] PROGMEM = "0.1";   		// -> keine Änderung durch User
 
 //Strings im Flash für CMD-Rückmeldungen über WLAN
 const char txtp_cmdend[] PROGMEM = ">";						// Befehlsende-Zeichen
-const char txtp_cmdtrenn[] PROGMEM = ":";						// Options-Trennzeichen
+const char txtp_cmdtrenn[] PROGMEM = ":";					// Options-Trennzeichen
 const char txtp_errmotor[] PROGMEM = "<error:motor:";		// Motor-Error
 const char txtp_sd[] PROGMEM = "<sd:";						// Speed-Rückmeldung
 const char txtp_iam[] PROGMEM = "<iam:1:";					// Meldung mit Lok-Namen <iam:typ:name>
 const char txtp_pong[] PROGMEM = "<pong>";					// Antwort für den ping Befe
 const char txtp_default_lok_name[] PROGMEM = "Lok X";		// Standardwert für EEData Lokname
 const char txtp_default_owner_name[] PROGMEM = "TheOwner";	// Standardwert für EEData Owner-Name
-const char txtp_hwi[] PROGMEM = "<hwi:01> ";				// Antwort auf <hwget> 01 = Board UC02 (ATMega2561)
+const char txtp_hwi[] PROGMEM = "<hwi:01>";					// Antwort auf <hwget> 01 = Board UC02 (ATMega2561)
 const char txtp_cmd_servoi[] PROGMEM = "<servoi:";			// Antwort auf <servoget>
 const char txtp_cmd_ui[] PROGMEM = "<ui:";					// Rückmeldung Spannungswerte
 
@@ -127,6 +126,8 @@ const char txtp_cmd_hwget[] PROGMEM = "hwget";
 const char txtp_cmd_servoget[] PROGMEM = "servoget";
 const char txtp_cmd_servoset[] PROGMEM = "servoset:";
 const char txtp_cmd_gpioc[] PROGMEM = "gpioc:";
+const char txtp_cmd_fpwmset[] PROGMEM = "fpwmset:";
+
 
 
 int main(void)
@@ -141,11 +142,13 @@ int main(void)
 
 	init_eeprom();	// eeprom checken, ggf. vorbereiten
 
-	init_uart(UART_NR_WLAN, UART_SETTING_WLAN);	// WLAN Daten Empfang aktivieren
+	init_uart(WLAN_UART_NR, UART_SETTING_WLAN);	// WLAN Daten Empfang aktivieren
 
 	init_timer5(); 	// timer5 mit 244Hz (4ms)
 
 	init_motorctrl();	// Ausgänge für Motorsteuerung, PWM
+	motor_wakeup();		// motor aufwecken, sonst läuft er nicht
+
 
 	#if defined( LEDC_PCA9622 ) || defined( LEDC_TLC59116 )
 	i2c_init();
@@ -154,10 +157,9 @@ int main(void)
 	
 	setbit(DDRD,PD6);	// Pin als Ausgang definieren - für Testsignal
 	setbit(DDRD,PD7);	// Pin als Ausgang definieren - für Testsignal
-	
+
 	init_adc();
 	initServo();
-
 
 	init_gpios();		// frei verfügbare GPIOs als Ausgang definieren (nach Servos, ADC)
 						//falls nichts Anderes konfiguriert wird, wird nur der komplette Port C als Ausgang definiert
@@ -169,7 +171,7 @@ int main(void)
 
 	wlan_puts("<MC start>");
 
-	setbit(PORTD,PD6);	// TEST: auf HI
+	//setbit(PORTD,PD6);	// TEST: auf HI
 
 //-------------------------------------------------------------------------------------------------------------
 //------                       H A U P T S C H L E I F E                                               --------
@@ -198,7 +200,7 @@ int main(void)
 		}
 
 		//Error von MotorController checken (passt für phb01 und Pololu 24v20) -> Error wird in motorerror gespeichert
-		checkMotorStatus();  // TODO: Funktion testen
+		checkMotorStatus();
 
 
 		if (state & STATE_5X_PRO_SEK)
@@ -250,7 +252,6 @@ int main(void)
 			cli();
 			state &= ~STATE_1X_PRO_SEK;	// state-flag zurücksetzen
 			sei();
-
 		}
 
 		if (state & STATE_ADC_CHECK) { check_adc(); }		// fertige ADC-Messungen auswerten

@@ -36,32 +36,33 @@ void set_speed(void)
 	// Richtungswechsel nur bei Speed == 0, dafür immer, wenn Speed-Änderung vorliegt
 	if ((speed == 0) & (speed_soll != 0))
 	{
-		if(richtung_soll == RICHTUNG_VW)		// vorwärts
+		if (richtung_soll == RICHTUNG_VW)		// vorwärts
 		{
 
-#if defined( HW_TESTBOARD2 ) || defined( PHB01_MOTOR1 )
-			setbit(PORT_MOTOR, MOTOR1_DIR);	// Motor1 vorwärts
-#endif
+			#if defined( HW_TESTBOARD2 ) || defined( PHB01_MOTOR1 )
+				setbit(PORT_MOTOR, MOTOR1_DIR);	// Motor1 vorwärts
+			#endif
 
-#if defined( PHB01_MOTOR2 )
-			setbit(PORT_MOTOR, MOTOR2_DIR);	// Motor2 (eigene H-Brücke) vorwärts
-#endif
-
+			#if defined( PHB01_MOTOR2 )
+				setbit(PORT_MOTOR, MOTOR2_DIR);	// Motor2 (eigene H-Brücke) vorwärts
+			#endif
 
 			richtung = RICHTUNG_VW;
+			setbit(PORTD,PD6);	// TODO TEST - wieder weg
 		}
-		else if(richtung_soll == RICHTUNG_RW)	// rückwärts
+		else if (richtung_soll == RICHTUNG_RW)	// rückwärts
 		{
 
-#if defined( HW_TESTBOARD2 ) || defined( PHB01_MOTOR1 )
-			clearbit(PORT_MOTOR, MOTOR1_DIR);	// Motor1 rückwärts
-#endif
+			#if defined( HW_TESTBOARD2 ) || defined( PHB01_MOTOR1 )
+				clearbit(PORT_MOTOR, MOTOR1_DIR);	// Motor1 rückwärts
+			#endif
 
-#if defined( PHB01_MOTOR2 )
-			clearbit(PORT_MOTOR, MOTOR2_DIR);	// Motor2 (eigene H-Brücke) vorwärts
-#endif
+			#if defined( PHB01_MOTOR2 )
+				clearbit(PORT_MOTOR, MOTOR2_DIR);	// Motor2 (eigene H-Brücke) vorwärts
+			#endif
 
 			richtung = RICHTUNG_RW;
+			clearbit(PORTD,PD6);	// TODO TEST - wieder weg
 		}
 	}
 

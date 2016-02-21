@@ -25,7 +25,6 @@
 //#define WLAN_RASPI			// Raspi (WLAN über selbe UART wie Bootloader)
 #define PHB01_MOTOR1		// Motorcontroller PHB01: H-Brücke wird für Motor 1 verwendet
 //#define PHB01_MOTOR2		// Motorcontroller PHB01: eine 2. H-Brücke wird für Motor 2 verwendet
-#define UART_NR_WLAN 0		// uart0 für WLAN
 //#define UART_NR_RFID 1	// uart1 für RFID
 //#define LEDC_TLC59116	1	//LED-Controller TLC59116 ist vorhanden (es kann derzeit nur einer davon verwendet werden. entweder PCA9622 oder TLC59116!!)
 #define LEDC_PCA9622	1	//LED-Controller PCA9622 ist vorhanden
