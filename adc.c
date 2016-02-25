@@ -38,9 +38,12 @@ void init_adc()
 	// geben und es muss aus der Maske die Anzahl der verwendeten Channels ermittelt werden -> egal welche Methode -> in der ISR berücksichtigen
 
 	adc_mask = eeprom_getADCGPIO();	// gespeicherte ADC-Konfiguration aus EEPROM laden
+
 	if (adc_mask == 0) { return; }	// nichts zu tun!
 
 	DDRF &= ~adc_mask;	// gesetzte ADC-Kanäle auf Eingang (0) schalten
+	clearbit(DDRF,0);		// Port F  (ADC0-7)  auf Eingang (0) schalten	// TODO: test , nur zur sicherheit nochmal, wieder entfernen!
+
 
 	//setbit(DIDR0,ADC0D);	// digital input buffer disabled für ADC0 pin (reduces power consumption, besser für ADC)
 	DIDR0 = 0xff;			// gleich für den ganzen Port F setzen (ADC0D - ADC7D)
@@ -75,15 +78,26 @@ void init_adc()
 		}
 	}
 
-	ADMUX = (ADMUX & ~(0x1F)) | (adcchannel & 0x1F);	// Kanal auswählen
+	// ADMUX = (ADMUX & ~(0x1F)) | (1<<adcchannel & 0x1F);	// Kanal auswählen - funkt so nicht!!!!!
+
+
+	// es müssen also nur MUX0 bis MUX2 gesetzt werden
+	// MUX3 und MUX4 sind immer 0 für single channel ADC0-7
+
+	for (i = 0; i < 3; i++ )
+	{
+		if (adcchannel & 1<<i) { setbit(ADMUX,i); }
+		else { clearbit(ADMUX,i); }
+	}
+
+	clearbit(ADMUX,MUX3);
+	clearbit(ADMUX,MUX4);
+
 	ADCSRB &= ~((1<< MUX5));	//oberstes bit MUX5 (in anderem Register) ist für single channel ADC0-7 immer 0! //MUX5 =3 (bit 3)
 
 	setbit(ADCSRA,ADEN);	// ADC enable
-
-	//setbit(ADCSRA,ADIE);	// ADC interrupt enable
-
-	//setbit(ADCSRA,ADSC);	// start (each) ADC conversion
-	//erste Messung immer ignorieren
+	setbit(ADCSRA,ADIE);	// ADC interrupt enable
+	setbit(ADCSRA,ADSC);	// start first ADC conversion
 
 }
 
@@ -95,7 +109,7 @@ void adc_msg_all(char *txtbuffer)
 	char valbuffer[10];
 	for( i = 0; i < 8; i++ )
 	{
-		if ((1<<adcchannel) & adc_mask)	// wenn channel verwendet wird
+		if ((1<<i) & adc_mask)	// wenn channel verwendet wird
 		{
 			memset(txtbuffer, 0, UART_MAXSTRLEN+1);	// text leeren
 			strlcpy_P(txtbuffer, txtp_cmd_ui, 5);
@@ -136,7 +150,16 @@ void check_adc()
 		}
 	}
 
-	ADMUX = (ADMUX & ~(0x1F)) | (adcchannel & 0x1F);	// nächsten Channel einstellen
+	// ADMUX = (ADMUX & ~(0x1F)) | (1<<adcchannel & 0x1F);
+
+	// nächsten Channel einstellen
+	uint8_t i;
+	for (i = 0; i < 3; i++ )
+	{
+		if (adcchannel & 1<<i) { setbit(ADMUX,i); }
+		else { clearbit(ADMUX,i); }
+	}
+
 
 	cli();
 	state &= ~STATE_ADC_CHECK;	// state-flag zurücksetzen
@@ -166,13 +189,14 @@ ISR(ADC_vect) {
 
 	val = ADC;	//Wert muss immer gelesen werden
 
+	PORT_TESTSIGNAL ^= (1<<PD6);	// TODO: nur für test!
+
 	if (adcreadcount > 0) { adcvalue_work += val; }	// erste Messung immer ignorieren, die weitern 4 aufaddieren (zur späteren Mittelung)
 
 	adcreadcount++;
 
 	if (adcreadcount > 4) { state |= STATE_ADC_CHECK; }	// state setzen: Messdaten können ausgewertet werden
-
-
+	else { setbit(ADCSRA,ADSC); } 	// start next conversion
 
 }	// ISR end
 

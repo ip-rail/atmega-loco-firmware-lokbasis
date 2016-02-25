@@ -233,19 +233,33 @@ void befehl_auswerten(void)
 
 	else if(!strncmp_P(wlan_string, txtp_cmd_fpwmset, 8))	// "fpwmset:"  PWM-Frequenz setzen
 	{
-		char pwmf = 0;
+		uint8_t pwmf_new = 0;
 		strncpy(test, wlan_string+8, 1);		// die einstellige Zahl rauskopiern
 		test[1] = (char) 0;	// string mit 0-Byte abschließen
-		pwmf = atoi(test);
+		pwmf_new = atoi(test);
 
-		cli();
-		speed_soll = 0;
-		sei();
+		if ((pwmf_new < 1) || (pwmf_new > 9)) { pwmf_new = MOTOR_PWMF_STD; } // muss im Berech on 1 bis 9
 
-		if (speed != 0) { warte_ms(1000); }	// zur Sicherheit warten, bis Lok steht
-		init_pwm(pwmf);		// neuen PWM-Modus setzen
+		if (pwmf_new != motor_pwmf)
+		{
+			motor_pwmf = pwmf_new;
+			eeprom_update_MotorPWMf(motor_pwmf);
+			cli();
+			speed_soll = 0;
+			sei();
+			if (speed != 0) { warte_ms(1000); }	// zur Sicherheit warten, bis Lok steht -> 1s Zeit geben
+			init_pwm(motor_pwmf);		// neuen PWM-Modus setzen
+		}
 	}
 
+	else if(!strcmp_P(wlan_string, txtp_cmd_fpwmget))	// <fpwmget> PWM-Frequenz abfragen -> Rückmeldung <fpwmi:n>
+	{
+		// txtp_cmd_fpwmi[] PROGMEM = "<fpwmi:";
+		strlcpy_P(test, txtp_cmd_fpwmi, 8);	// Rückmeldung der Geschwindigkeit	//bei der Länge immer 0-Zeichen mitzählen!
+		itoa(motor_pwmf, test+7, 10);
+		strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1);	// will länge des kompletten "test" buffers+0
+		wlan_puts(test);
+	}
 
 
 

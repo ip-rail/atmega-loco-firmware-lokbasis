@@ -45,8 +45,8 @@
 #define TESTSIGNAL2	PD6
 
 // Motorcontroller PHB01
-//#define MOTOR1_ADC 	PF7 	// Input, ADC6 Motor 1
-//#define MOTOR2_ADC 	PF6 	// Input,ADC7 Motor 2
+//#define MOTOR1_ADC 	PF7 	// Input, ADC7 Motor 1
+//#define MOTOR2_ADC 	PF6 	// Input, ADC6 Motor 2
 
 #define MOTOR1_DIR 	PA0 	// Output, Motor1 Richtung
 #define MOTOR2_DIR 	PA4 	// Output, Motor1 Richtung
@@ -67,6 +67,8 @@
 #define PORT_MOTOR_PWM	PORTB
 
 #define PIN_MOTOR PINA
+
+#define MOTOR_PWMF_STD	8	// Motor-PWM-Frequenz Standardwert: Mode 8: 15656Hz
 
 
 //ADC

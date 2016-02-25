@@ -15,7 +15,9 @@
 #define EEDATA_ADR_START 			0		// Startadresse der Daten im EEPROM
 #define EEDATA_ADR_VERSION			EEDATA_ADR_START + 4
 #define EEDATA_ADR_ADCUSED			EEDATA_ADR_VERSION + 2
-#define EEDATA_ADR_SERVO_MODE		EEDATA_ADR_ADCUSED + 1
+#define EEDATA_ADR_MOTOR_PWMF		EEDATA_ADR_ADCUSED + 1
+
+#define EEDATA_ADR_SERVO_MODE		EEDATA_ADR_MOTOR_PWMF + 1
 #define EEDATA_ADR_SERVO_COUNT		EEDATA_ADR_SERVO_MODE + 1
 #define EEDATA_ADR_SERVO_PORT		EEDATA_ADR_SERVO_COUNT + 1
 #define EEDATA_ADR_SERVO_PIN 		EEDATA_ADR_SERVO_PORT + SERVOCOUNTMAX
@@ -28,10 +30,11 @@
 #define EEDATA_ADR_OWNERNAME		EEDATA_ADR_LOKNAME + EEDATA_MAXSTRLEN
 
 #define EE_MAGIC_CODE	0xAABBCCDD	// Kennzeichnung, dass EEPROM bereits g�ltige Daten enth�lt
-#define EEDATA_VERSION	1			// aktuelle Version der Daten(struktur)
+#define EEDATA_VERSION	2			// aktuelle Version der Daten(struktur)
 
 
 extern void eeprom_checkversion();
+extern void eeprom_updatesys(uint16_t oldversion);
 extern void init_eeprom();
 extern void eeprom_update_oname(const char *data);
 extern void eeprom_update_lname(const char *data);
@@ -42,7 +45,9 @@ extern void eeprom_update_ServoCount(const uint8_t count);
 extern void eeprom_getServoGPIO();
 extern void eeprom_update_ServoGPIO(const void *ports, const void *pins);
 extern uint8_t  eeprom_getADCGPIO();
-extern void  eeprom__update_ADCGPIO(const uint8_t adcmask);
+extern void  eeprom_update_ADCGPIO(const uint8_t adcmask);
+extern uint8_t eeprom_getMotorPWMf();
+extern void eeprom_update_MotorPWMf(const uint8_t pwmf);
 extern uint8_t eeprom_getGPIO(char port);
 extern void eeprom_update_GPIO(uint8_t maskB, uint8_t maskD, uint8_t maskE, uint8_t maskG);
 

@@ -24,15 +24,18 @@
 //servoPort[SERVOCOUNTMAX] = alt: { &PORTB, &PORTB, &PORTB, &PORTB, &PORTB, &PORTD } neu: { 'B', 'B', 'B', 'B', 'B', 'D' }
 //servoPin[SERVOCOUNTMAX]  = { PB0, PB1, PB2, PB3, PB7, PD4 }	// Pin-Nummer
 
- uint8_t servo_mode;	// 0: für jedes Servosignal wird ein GPIO verwendet (vordefinieren welche!). 1: alle Signale nur an 1 GPIO ausgeben (Port,Pin mit Index 0), an dem ein Kreiszähler-IC hängt
- uint8_t servo_count;	// wieviele Servosignale ausgeben (max. 6-8?)
- uint8_t servoPort[SERVOCOUNTMAX];	//Port und Pin der GPIOs, die für Servos verwendet werden (verwendet werden Index 0 bis SERVOCOUNTMAX-1)
- uint8_t servoPin[SERVOCOUNTMAX];	//Port und Pin gehören je Index zusammen
- uint8_t servo_sleep;		// grober Wert, wieviel von den 20ms Servo-Intervall gewartet werden muss
- // diese Variablen ändern sich nach der Initialisierung nicht mehr, daher kein "volatile" nötig
+
+uint8_t servo_mode;	// 0: für jedes Servosignal wird ein GPIO verwendet (vordefinieren welche!). 1: alle Signale nur an 1 GPIO ausgeben (Port,Pin mit Index 0), an dem ein Kreiszähler-IC hängt
+uint8_t servo_count;	// wieviele Servosignale ausgeben (max. 6-8?)
+uint8_t servoPort[SERVOCOUNTMAX];	//Port und Pin der GPIOs, die für Servos verwendet werden (verwendet werden Index 0 bis SERVOCOUNTMAX-1)
+uint8_t servoPin[SERVOCOUNTMAX];	//Port und Pin gehören je Index zusammen
+uint8_t servo_sleep;		// grober Wert, wieviel von den 20ms Servo-Intervall gewartet werden muss
+// diese Variablen ändern sich nach der Initialisierung nicht mehr, daher kein "volatile" nötig
 
 //const uint8_t ServoOutput[SERVOCOUNT] = { 1<<PB1, 1<<PB2 };	// kein "volatile" nötig, da sich das nicht mehr ändert (-> const)
 
+uint8_t servo_run;		// zum Stoppen der Signalgenerierung (wird im Timer4-Interrupt ausgelesen)
+						// 0 = Signalgenerierung stoppen, 1 = weitermachen
 
 // Werte für die Servoposition
 // Gültige Werte laufen von 0 bis 2 * CENTER
@@ -90,7 +93,7 @@ ISR (TIMER0_OVF_vect)      // wird alle 1,024ms ms aufgerufen, zuständig für's
 ISR (TIMER4_COMPA_vect)	// beendet den jweils aktuellen Servo-Puls und kümmert sich um die nachfolgende Aktion (weiter Puls oder Ende)
 {
 	uint8_t sid = ServoId;	// volatile Variable in ein Register laden (dh. wenn's der Compiler macht)
-	uint8_t sid_out = ServoId;	//für Ausgabe, muss bei servo_mode immer 0 sein!
+	uint8_t sid_out = ServoId;	//für Ausgabe, muss bei servo_mode=1 immer 0 sein!
 
 	if(servo_mode) { sid_out = 0; }	// alle Servosignale am selben (ersten) GPIO ausgeben (für nachgeschalteten Kreiszähler-IC)
 
@@ -118,16 +121,22 @@ ISR (TIMER4_COMPA_vect)	// beendet den jweils aktuellen Servo-Puls und kümmert 
 
 	if( ++sid >= servo_count ) // alle Servos haben ihren aktuellen Impuls bekommen?
 	{
-		// timer0 starten, der sich um den Rest der 20ms kümmert (in dem keine Servo-Impulse ausgegeben werden)
-		TCCR0B |=  (1 << CS01) | ( 1 << CS00 );    	// Prescaler: 64 (startet den timer!)
+		if (servo_run)	// nur machen, wenn weiter Servosignale generiert werden sollen
+		{
+			// timer0 starten, der sich um den Rest der 20ms kümmert (in dem keine Servo-Impulse ausgegeben werden)
+			TCCR0B |=  (1 << CS01) | ( 1 << CS00 );    	// Prescaler: 64 (startet den timer!)
+		}
 
 		// dann timer4 stoppen und alles für einen neuen Durchlauf vorbereiten
 		sid = 0;
 
 		// TCCR4B CS42, CS41, CS40: clock select
 		// 000: timer stopped
-		TCCR4B &= ~((1 << CS42) | (1 << CS41) | (1 << CS40)); // timer1 stoppen
+		TCCR4B &= ~((1 << CS42) | (1 << CS41) | (1 << CS40)); // timer4 stoppen
 		TCNT4 = 0;	//timer4 auf 0 setzen
+
+
+
 	}
 	else
 	{
@@ -168,6 +177,10 @@ void initServo()
 	//#define SERVOCOUNT      2 <- aus eeprom-daten lesen
 	//#define SERVO_DDR      DDRB	- wird durch servoPort[] ersetzt
 	//#define SERVO_PORT     PORTB  - wird durch servoPin[] ersetzt
+
+	servo_run = 1;	//	Variable zum Stoppen der Servo-Signalgenereierung
+	// gestartet wird mit dem Starten von timer4, ist in initServo() aber auskommentiert
+
 
 	// Servo Konfiguration aus EEPROM auslesen und globale Variablen befüllen!!!
 
@@ -241,7 +254,7 @@ void initServo()
 	TIMSK0 = ( 1 << TOIE0 );   // Overflow Interrupt einschalten
 
 
-	// Timer1 auf CTC Modus konfigurieren
+	// Timer4 auf CTC Modus konfigurieren
 	OCR4A = MILLISEC_BASE + servoValue[0];
 	TIMSK4 |= (1<<OCIE4A);
 
@@ -262,6 +275,18 @@ void initServo()
 
 	TCCR4B |= (1<<WGM42);		// CTC mode
 
-	// TCCR4B |= (1 << CS40);	//start timer1, prescaler=1	// nicht hier starten!
+
+	// alles ist bereit, Signalgenerierung startet aber erst mit dem Starten von timer 4!
+	// Stoppen der Signalgenerierung wäre mit: servo_run=0;
+	// TCCR4B |= (1 << CS40);	//start timer4, prescaler=1	// nicht hier starten!
 }
 
+void Servo_stop()	// Stoppen der Signalgenerierung für die Servos
+{
+	servo_run=0;
+}
+
+void Servo_start()	// Signalgenerierung für Servos starten (initServo() muss natürlich schon gelaufen sein)
+{
+	TCCR4B |= (1 << CS40);	//start timer4, prescaler=1
+}

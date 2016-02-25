@@ -48,7 +48,6 @@ void set_speed(void)
 			#endif
 
 			richtung = RICHTUNG_VW;
-			setbit(PORTD,PD6);	// TODO TEST - wieder weg
 		}
 		else if (richtung_soll == RICHTUNG_RW)	// rückwärts
 		{
@@ -62,7 +61,6 @@ void set_speed(void)
 			#endif
 
 			richtung = RICHTUNG_RW;
-			clearbit(PORTD,PD6);	// TODO TEST - wieder weg
 		}
 	}
 

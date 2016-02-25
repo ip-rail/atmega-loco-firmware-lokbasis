@@ -74,6 +74,7 @@ volatile char alivesecs = 0;	// globlae Variable die zählt, wie lange die Zähl
 
 volatile unsigned char motor_reg = 1;	// Variable für Motor-Regelung ein/aus (auch für isr verwendet)
 uint8_t motorerror = 0;					// Errorcode von Motorcontroller: 0 = kein Error
+uint8_t motor_pwmf = MOTOR_PWMF_STD;	// Auswahl der Motor-PWM-Frequenz Wert 1 bis 9 (siehe: Tabelle in funktionen.c)
 
 //ADC
 volatile uint8_t adcchannel = 0;		// aktueller ADC channel 0-7
@@ -90,7 +91,7 @@ uint8_t  gpios_g;		//
 
 // LokData im Flash
 const char dev_swname[] PROGMEM = "lokbasis";     	// -> keine Änderung durch User -> flash
-const char dev_swversion[] PROGMEM = "0.1";   		// -> keine Änderung durch User -> flash
+const char dev_swversion[] PROGMEM = "2";   		// -> keine Änderung durch User -> flash
 
 //Strings im Flash für CMD-Rückmeldungen über WLAN
 const char txtp_cmdend[] PROGMEM = ">";						// Befehlsende-Zeichen
@@ -104,6 +105,7 @@ const char txtp_default_owner_name[] PROGMEM = "TheOwner";	// Standardwert für 
 const char txtp_hwi[] PROGMEM = "<hwi:01>";					// Antwort auf <hwget> 01 = Board UC02 (ATMega2561)
 const char txtp_cmd_servoi[] PROGMEM = "<servoi:";			// Antwort auf <servoget>
 const char txtp_cmd_ui[] PROGMEM = "<ui:";					// Rückmeldung Spannungswerte
+const char txtp_cmd_fpwmi[] PROGMEM = "<fpwmi:";			// Rückmeldung Motor-PWM-Frequenz
 
 // Befehle - Strings für auswertung, daher ohne spitze Klammern
 const char txtp_cmd_stop[] PROGMEM = "stop";
@@ -127,7 +129,7 @@ const char txtp_cmd_servoget[] PROGMEM = "servoget";
 const char txtp_cmd_servoset[] PROGMEM = "servoset:";
 const char txtp_cmd_gpioc[] PROGMEM = "gpioc:";
 const char txtp_cmd_fpwmset[] PROGMEM = "fpwmset:";
-
+const char txtp_cmd_fpwmget[] PROGMEM = "fpwmget";
 
 
 int main(void)
@@ -140,7 +142,7 @@ int main(void)
 
 	// ========================  Hardware Initialisierung  ========================================================
 
-	init_eeprom();	// eeprom checken, ggf. vorbereiten
+	eeprom_checkversion();	// eeprom checken, ggf. vorbereiten
 
 	init_uart(WLAN_UART_NR, UART_SETTING_WLAN);	// WLAN Daten Empfang aktivieren
 
@@ -160,6 +162,7 @@ int main(void)
 
 	init_adc();
 	initServo();
+	Servo_start();	// Signalgenerierung starten
 
 	init_gpios();		// frei verfügbare GPIOs als Ausgang definieren (nach Servos, ADC)
 						//falls nichts Anderes konfiguriert wird, wird nur der komplette Port C als Ausgang definiert
@@ -225,17 +228,6 @@ int main(void)
 			else { servoValue[0] = CENTER; }
 			if (servoValue[1] == CENTER) { servoValue[1] = 0; }
 			else { servoValue[1] = CENTER; }
-
-
-			/*
-			// Test-Ausgabe MotorStatus
-			memset(test, 0, UART_MAXSTRLEN+1);	// string leeren
-			strlcpy_P(test, txtp_errmotor, 14);
-			ltoa(motorerror, test+13, 10);
-			strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1); // will Länge des kompletten "test" buffers+0
-			wlan_puts(test);
-			*/
-
 
 			/*
 			ltoa(loop_count, test, 10);	// testweise Rückmeldung des loopcount -> später an handy

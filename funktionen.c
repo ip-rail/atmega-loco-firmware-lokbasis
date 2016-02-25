@@ -146,7 +146,9 @@ void init_motorctrl(void)
 	#endif
 
 		// Timer 1 für Motor-PWM initialisieren --------------------------------------
-		init_pwm(8);	// Mode 8: 15656Hz 9bit prescaler 1  - Timer 1 für Motor-PWM initialisieren
+		motor_pwmf = eeprom_getMotorPWMf();
+		if ((motor_pwmf < 1) || (motor_pwmf > 9)) { motor_pwmf = MOTOR_PWMF_STD; } // muss im Berech on 1 bis 9
+		init_pwm(motor_pwmf);	// Standardwert: Mode 8: 15656Hz 9bit prescaler 1  - Timer 1 für Motor-PWM initialisieren
 
 #endif
 }
@@ -176,9 +178,6 @@ void init_pwm(char freq_pwm)	// Timer 1 für Motor-PWM initialisieren
     Phase correct PWM: f-pwm = 16MHz / (2 * prescaler * TOP )	TOP: 10bit=1023, 9bit=511, 8bit=255
 	*/
 
-
-	// DDR_MOTOR_PWM |= (1<<MOTOR1_PWM) | (1<<MOTOR2_PWM);	// als Ausgänge setzen
-	//DDR_MOTOR_PWM |= (1<<MOTOR1_PWM);	// als Ausgänge setzen - nur 1 H-Brücke
 
 	#if defined( PHB01_MOTOR1 )
 		DDR_MOTOR_PWM |= (1<<MOTOR1_PWM);	// als Ausgang setzen - 1. H-Brücke
