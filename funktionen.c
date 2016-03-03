@@ -324,17 +324,17 @@ void checkMotorStatus()
 	motorerror = 0;
 	char test[UART_MAXSTRLEN+1];
 
-	if (PIN_MOTOR & (1<<MOTOR1_FF1)) { motorerror |= 1; } 		else { motorerror &= ~1; }	// bit 0
-	if (PIN_MOTOR & (1<<MOTOR1_FF2)) { motorerror |= (1<<1); } 	else { motorerror &= ~2; }	// bit 1
+	if (PIN_MOTOR & (1<<MOTOR1_FF1)) { motorerror |= 1; } 	else { motorerror &= ~1; }	// bit 0
+	if (PIN_MOTOR & (1<<MOTOR1_FF2)) { motorerror |= 2; } 	else { motorerror &= ~2; }	// bit 1
 
 	#if defined( PHB01_MOTOR2 )
 
-			if (PIN_MOTOR & (1<<MOTOR2_FF1)) { motorerror |= (1<<2); } 	else { motorerror &= ~4; }	// bit 2
-			if (PIN_MOTOR & (1<<MOTOR2_FF2)) { motorerror |= (1<<3); } 	else { motorerror &= ~8; }	// bit 3
+			if (PIN_MOTOR & (1<<MOTOR2_FF1)) { motorerror |= 4; } 	else { motorerror &= ~4; }	// bit 2
+			if (PIN_MOTOR & (1<<MOTOR2_FF2)) { motorerror |= 8; } 	else { motorerror &= ~8; }	// bit 3
 	#endif	// PHB01_MOTOR2
 
 
-	if (motorerror > 0)	// bei Error: Speed auf 0 setzen -> stop (geschieht nicht sofort!!)
+	if (motorerror > 0)	// bei Error: Speed auf 0 setzen -> stop (geschieht nicht sofort!!) passiert im speed.c
 	{
 		if (error_alt == 0)	// beim ersten Auftreten an Controller melden
 		{

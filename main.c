@@ -69,10 +69,10 @@ unsigned char richtung_soll = RICHTUNG_VW;		// globlae variable für die Richtun
 unsigned char speedstep_korrektur = 0;			// Korrekturvariable, falls 8bit oder 9bit pwm statt 10bit verwendet wird
 												// gibt an, um wieviele bit der speedwert geshiftet werden muss, damit er für die 10bit Verarbeitung passt (im timer3 interrupt)
 
-unsigned char alivecount = 0;	// globlae Variable zum Zählen der Meldungen von der Gegenstelle
-volatile char alivesecs = 0;	// globlae Variable die zählt, wie lange die Zählung geht -> man kann variable bestimmen, in welchem intervall geprüft wird
-
-volatile unsigned char motor_reg = 1;	// Variable für Motor-Regelung ein/aus (auch für isr verwendet)
+uint8_t alivecount = 0;	// globlae Variable zum Zählen der Meldungen von der Gegenstelle
+volatile  uint8_t alivesecs = 0;	// globlae Variable die zählt, wie lange die Zählung geht -> man kann bestimmen, in welchem intervall geprüft wird
+uint8_t maxalivesecs = 3;			// Einstellung für den Alive-check [Sekunden, die die Lok ohne neue Befehle weiterfahren darf] 0 -> keine Prüfung
+// volatile unsigned char motor_reg = 1;	// TODO: Variable für Motor-Regelung ein/aus (auch für isr verwendet) [aktivieren, wenn benötigt]
 uint8_t motorerror = 0;					// Errorcode von Motorcontroller: 0 = kein Error
 uint8_t motor_pwmf = MOTOR_PWMF_STD;	// Auswahl der Motor-PWM-Frequenz Wert 1 bis 9 (siehe: Tabelle in funktionen.c)
 
@@ -91,7 +91,7 @@ uint8_t  gpios_g;		//
 
 // LokData im Flash
 const char dev_swname[] PROGMEM = "lokbasis";     	// -> keine Änderung durch User -> flash
-const char dev_swversion[] PROGMEM = "2";   		// -> keine Änderung durch User -> flash
+const char dev_swversion[] PROGMEM = "4";   		// -> keine Änderung durch User -> flash
 
 //Strings im Flash für CMD-Rückmeldungen über WLAN
 const char txtp_cmdend[] PROGMEM = ">";						// Befehlsende-Zeichen
@@ -137,12 +137,14 @@ int main(void)
 	char test[UART_MAXSTRLEN+1] = "";			// für string-Bearbeitungen (Rückmeldungen usw.)
 	uint32_t loop_count = 0;					// Zähler für Hauptschleife
 	uint32_t last_loop_count = 0;					// letztes gültiges Ergebnis des Zählers für Hauptschleife
-
+	uint8_t alone = 0;							// variable speichert ergebnis des alive-checks
 
 
 	// ========================  Hardware Initialisierung  ========================================================
 
 	eeprom_checkversion();	// eeprom checken, ggf. vorbereiten
+
+	maxalivesecs = eeprom_getAliveCheckSecs();	//Intervall für Alivecheck - nach x Sekunden stoppen
 
 	init_uart(WLAN_UART_NR, UART_SETTING_WLAN);	// WLAN Daten Empfang aktivieren
 
@@ -188,19 +190,18 @@ int main(void)
 	{
 		loop_count++;	// Zähler für Hauptschleife
 
-		PORT_TESTSIGNAL ^= (1<<TESTSIGNAL);	// Signale bei jedem Durchlauf togglen (oder 1x pro Sekunde weiter unten)
-
-
-		if (alivesecs >= 3)	// //TODO lokdata // Prüfintervall = ALIVE_INTERVAL Sekunden! -> Lok stoppt nach ALIVE_INTERVAL sek herrenloser Fahrt
+		if (maxalivesecs > 0)	// Wert 0 -> keinen Alive-Check machen (Prüfung nach 0 Sekunden würde auch keinen Sinn ergeben
 		{
-			if (alivecount == 0)	// prüfen, ob in diesem Prüfintervall Meldungen der Gegenstelle einglangt sind
+			if (alivesecs >= maxalivesecs)	// Prüfintervall = maxalivesecs Sekunden -> Lok stoppt nach maxalivesecs sek herrenloser Fahrt
 			{
-				//alone = 1;
-
-			}
+				if (alivecount == 0) { alone = 1; }	// prüfen, ob in diesem Prüfintervall Meldungen der Gegenstelle eingelangt sind
+				else { alone = 0; }
 				alivecount = 0;	// Zähler rücksetzen
 				alivesecs = 0;
+			}
 		}
+
+		if (alone) { speed_soll = 0; }	// wenn zu lange keine Befehle angekommen sind -> Lok stoppen!
 
 		//Error von MotorController checken (passt für phb01 und Pololu 24v20) -> Error wird in motorerror gespeichert
 		checkMotorStatus();
@@ -213,9 +214,11 @@ int main(void)
 			cli();
 			state &= ~STATE_5X_PRO_SEK;	// state-flag zurücksetzen
 			sei();
+
+			PORT_TESTSIGNAL ^= (1<<TESTSIGNAL);	// Signale bei jedem Durchlauf togglen
 		}
 
-		if (state & STATE_1X_PRO_SEK)		// Meldung an Server bei == 1 / Steuergerät (ca. 1x pro Sekunde)
+		if (state & STATE_1X_PRO_SEK)		// Meldung an Server / Steuergerät
 		{
 			memset(test, 0, UART_MAXSTRLEN+1);	// string leeren
 			strlcpy_P(test, txtp_sd, 5);	// Rückmeldung der Geschwindigkeit	//bei der Länge immer 0-Zeichen mitzählen!
@@ -229,8 +232,10 @@ int main(void)
 			if (servoValue[1] == CENTER) { servoValue[1] = 0; }
 			else { servoValue[1] = CENTER; }
 
+			last_loop_count = loop_count;	// ermittelten loopcount sichern
+			loop_count = 0;	// loopcount sekündlich zurücksetzen -> ergibt loops/s
 			/*
-			ltoa(loop_count, test, 10);	// testweise Rückmeldung des loopcount -> später an handy
+			ltoa(loop_count, test, 10);	// TODO: testweise Rückmeldung des loopcount -> später an handy
 			log_puts_P("loopcount = ");
 			log_puts(test);
 			log_puts_P("\r\n");
@@ -239,8 +244,6 @@ int main(void)
 			// Spannungsmeldung Schiene, Akku und ev. Motoren
 			if (adc_mask != 0) { adc_msg_all(test); }	// alle ADC-Werte rückmelden
 
-			last_loop_count = loop_count;	// ermittelten loopcount sichern
-			loop_count = 0;	// loopcount sekündlich zurücksetzen -> ergibt loops/s
 			cli();
 			state &= ~STATE_1X_PRO_SEK;	// state-flag zurücksetzen
 			sei();
@@ -267,9 +270,6 @@ int main(void)
 //-----------------------------------------------------------------------------------------
 
 
-
-
-//-------------------------------------------------------------------------------------------------------------
 // isr für timer 5 output compare match A interrupt: 244 Hz = 4ms
 ISR(TIMER5_COMPA_vect) {
 

@@ -189,8 +189,6 @@ ISR(ADC_vect) {
 
 	val = ADC;	//Wert muss immer gelesen werden
 
-	PORT_TESTSIGNAL ^= (1<<PD6);	// TODO: nur für test!
-
 	if (adcreadcount > 0) { adcvalue_work += val; }	// erste Messung immer ignorieren, die weitern 4 aufaddieren (zur späteren Mittelung)
 
 	adcreadcount++;

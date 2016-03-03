@@ -32,29 +32,26 @@
 void befehl_auswerten(void)
 {
 	char test[UART_MAXSTRLEN+1];
+	uint8_t cmd_found = 1;	// checken, ob cmd behandelt wurde oder nicht
+
 	memset(test, 0, UART_MAXSTRLEN+1);	// text leeren
 	alivecount++;	// Meldungen von der Gegenstelle zählen (wenn es kein gültiger Befehl war, am Ende wieder --;
-	uint8_t cmd_found = 1;	// checken, ob cmd behandelt wurde oder nicht
+	if (alivecount == 0) { alivecount++; }	// damit nach Überlauf der alivecount nicht 0 wird
+
 
 	if(!strcmp_P(wlan_string, txtp_cmd_stop))	// "stop"
 	{
-		cli();
 		speed_soll = 0;
-		sei();
 	}
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_off))	// "off"
 	{
-		cli();
 		speed_soll = 0;
-		sei();
 	}
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_stopall))	// "stopall"
 	{
-		cli();
 		speed_soll = 0;
-		sei();
 	}
 
 	else if(!strncmp_P(wlan_string, txtp_cmd_richtung, 9))	//  "richtung:"
@@ -83,10 +80,7 @@ void befehl_auswerten(void)
 
 		zahl = atoi(test);
 		if ((zahl < 0) || (zahl > 1023)) { zahl = 0; }		// wenn etwas nicht passt
-
-		cli();
 		speed_soll = zahl;
-		sei();
 	}
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_ping))	// "ping" - mit "<pong>" antworten
@@ -183,7 +177,6 @@ void befehl_auswerten(void)
 		}
 		strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1);
 		wlan_puts(test);
-
 	}
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_servoset))		// servoset  zB: "servoset:0:6:B0:B1:B2:B3:B7:D4"
@@ -244,9 +237,7 @@ void befehl_auswerten(void)
 		{
 			motor_pwmf = pwmf_new;
 			eeprom_update_MotorPWMf(motor_pwmf);
-			cli();
 			speed_soll = 0;
-			sei();
 			if (speed != 0) { warte_ms(1000); }	// zur Sicherheit warten, bis Lok steht -> 1s Zeit geben
 			init_pwm(motor_pwmf);		// neuen PWM-Modus setzen
 		}
@@ -266,7 +257,7 @@ void befehl_auswerten(void)
 	// TODO: ADCGPIO (adc_used) set,get,rückmeldung
 	// TODO: konfigurierbare GPIOs set,get,rückmeldung
 	// TODO: switch Befehle zum Schalten freier GPIOs
-
+	// TODO: alive-fuktion ja/nein, alive-interval
 
 
 	else
@@ -275,6 +266,7 @@ void befehl_auswerten(void)
 		// Bearbeite ungültiges Kommando
 		// TODO: was machen? Rückmeldung unbekannter Befehl
 		alivecount--;	// den Zähler korrigieren (wurde bereits im vorhinein erhöhlt) - es werden nur gültige Befehle gezählt!!
+		// weil ungültige Befehle helfen nicht, wenn die Lok amok-läuft
 	}
 
 	/*
@@ -285,5 +277,7 @@ void befehl_auswerten(void)
 		//lcd_printlc(1,1,(unsigned char *)"letzter Befehl:");
 		//lcd_printlc(2,1,(unsigned char *)wlan_string);
 	} */
+
+	// TODO: ev. Fehler rückmelden, wenn Befehl nicht bekannt?
 
 }

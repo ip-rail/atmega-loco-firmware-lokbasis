@@ -23,6 +23,7 @@ typedef struct {
   //--- HW-Config
   uint8_t  adc_used;	//ADC0-7 bitmask: 0=unused, 1=used
   uint8_t  motor_pwmf;
+  uint8_t  alivechecksecs; 	Einstellung für den Alive-check [Sekunden, die die Lok ohne neue Befehle weiterfahren darf] 0 -> keine Prüfung
   uint8_t  servo_mode;	// 0: für jedes Servosignal wird ein GPIO verwendet (vordefinieren welche!). 1: alle Signale nur an 1 GPIO ausgeben (Port,Pin mit Index 0), an dem ein Kreiszähler-IC hängt
   uint8_t  servo_count;	// wieviele Servosignale ausgeben (max. 6-8?)
   uint8_t servoPort[SERVOCOUNTMAX];	//Port-Adresse und Pin-Nummer der GPIOs, die für Servos verwendet werden (verwendet werden Index 0 bis SERVOCOUNTMAX-1)
@@ -60,7 +61,8 @@ void eeprom_updatesys(uint16_t oldversion)
 	switch (oldversion)
 		{
 			case 1:	// Update von Version 1 auf 2
-				init_eeprom();	// ein letztes Mal init, bevor er defekt wird!! (damit wird auch die version upgedatet
+			case 2:	// Update von Version 2 auf 3
+				init_eeprom();	// ein letztes Mal init, bevor er defekt wird!! (damit wird auch die version upgedatet)
 			break;
 		}
 }
@@ -72,11 +74,12 @@ void init_eeprom()
 {
 	char datatxt[EEDATA_MAXSTRLEN];
 
-	//EEData version 2
+	//EEData version 3
 	eeprom_update_dword((uint32_t *)EEDATA_ADR_START, (uint32_t)EE_MAGIC_CODE);
 	eeprom_update_word((uint16_t *)EEDATA_ADR_VERSION, (uint16_t)EEDATA_VERSION);	// Data version
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_ADCUSED, 1);	// only use ADC0
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_MOTOR_PWMF, (uint8_t)MOTOR_PWMF_STD);
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_ALIVE_SECS, (uint8_t)ALIVE_INTERVAL);
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_SERVO_MODE, 0);	// a GPIO for each Servo
 	//eeprom_update_byte((uint8_t *)EEDATA_ADR_SERVO_COUNT, 0);	// no Servos used -> servo port,pin data doesn't matter!
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_SERVO_COUNT, 2);// TODO: nur Testdaten, wieder entfernen!
@@ -177,6 +180,16 @@ uint8_t eeprom_getMotorPWMf()
 void eeprom_update_MotorPWMf(const uint8_t pwmf)
 {
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_MOTOR_PWMF, pwmf);
+}
+
+uint8_t eeprom_getAliveCheckSecs()
+{
+	return eeprom_read_byte((const uint8_t *)EEDATA_ADR_ALIVE_SECS);
+}
+
+void eeprom_update_AliveCheckSecs(const uint8_t secs)
+{
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_ALIVE_SECS, secs);
 }
 
 

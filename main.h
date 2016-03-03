@@ -16,9 +16,9 @@
 #define setbit(P,BIT) 	((P) |= (1<<(BIT)))
 #define clearbit(P,BIT)	((P) &= ~(1<<(BIT)))
 
-#define UART_MAXSTRLEN 32		// maximal erlaubte Länge eines Befehls "<*>" incl. <>
+#define UART_MAXSTRLEN 64		// maximal erlaubte Länge eines Befehls "<*>" incl. <>
 
-#define ALIVE_INTERVAL 5		//Prüfintervall = 5 Sekunden! -> Lok stoppt nach 5sek herrenloser Fahrt
+#define ALIVE_INTERVAL 3		//Prüfintervall = 3 Sekunden! -> Lok stoppt nach 3sek herrenloser Fahrt
 
 // Statusdefinitionen für Interrupts und Main-Schleife
 #define STATE_1X_PRO_SEK 1		// Timer meldet sich 1x pro Sekunde
@@ -42,11 +42,10 @@ extern unsigned int speed_soll;				// Geschwindigkeitsvorgabe vom Steuerungsger�
 extern unsigned char richtung;
 extern unsigned char richtung_soll;
 extern unsigned char speedstep_korrektur;
-extern volatile unsigned char motor_reg;	// Variable für Motor-Regelung ein/aus (auch für isr verwendet)
+// extern volatile unsigned char motor_reg;	// Variable für Motor-Regelung ein/aus (auch für isr verwendet)
 extern uint8_t motorerror;					// Errorcode von Motorcontroller: 0 = kein Error
 extern uint8_t motor_pwmf;					// Auswahl der Motor-PWM-Frequenz
-extern unsigned char alivecount;			// zählt die empfangen Meldungen der Gegenstelle (wird zyklisch ausgewertet)
-extern volatile char alone;
+extern uint8_t alivecount;					// zählt die empfangen Meldungen der Gegenstelle (wird zyklisch ausgewertet)
 extern char wlan_string[UART_MAXSTRLEN+1];  // globaler String zum Abspeichern des vom WLAN empfangen Strings in read_wlan
 
 extern volatile uint8_t adcchannel;		// aktueller ADC channel 0-7
