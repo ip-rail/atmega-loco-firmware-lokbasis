@@ -76,7 +76,8 @@ void init_eeprom()
 
 	//EEData version 3
 	eeprom_update_dword((uint32_t *)EEDATA_ADR_START, (uint32_t)EE_MAGIC_CODE);
-	eeprom_update_word((uint16_t *)EEDATA_ADR_VERSION, (uint16_t)EEDATA_VERSION);	// Data version
+	//eeprom_update_word((uint16_t *)EEDATA_ADR_VERSION, (uint16_t)EEDATA_VERSION);	// TODO: error: eeData version wird so nicht geschrieben!!!!
+	eeprom_update_word((uint16_t *)4, 3);	// eeData version = 3 - so wird es geschrieben!!!!!!!!
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_ADCUSED, 1);	// only use ADC0
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_MOTOR_PWMF, (uint8_t)MOTOR_PWMF_STD);
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_ALIVE_SECS, (uint8_t)ALIVE_INTERVAL);
@@ -85,9 +86,9 @@ void init_eeprom()
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_SERVO_COUNT, 2);// TODO: nur Testdaten, wieder entfernen!
 
 	servoPort[0] = 'B';	// TODO: nur test
-	servoPin[0]  = 1<<PB0;	// TODO: nur test
+	servoPin[0]  = PB0;	// TODO: nur test
 	servoPort[1] = 'B';	// TODO: nur test
-	servoPin[1]  = 1<<PB1;	// TODO: nur test
+	servoPin[1]  = PB1;	// TODO: nur test
 	eeprom_update_ServoGPIO(servoPort, servoPin);	// TODO: nur test, wieder entfernen!
 
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_B, 0);	// Defaultwert 0: keine GPIOs verwenden

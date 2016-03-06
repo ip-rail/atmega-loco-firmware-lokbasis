@@ -141,9 +141,8 @@ ISR (TIMER4_COMPA_vect)	// beendet den jweils aktuellen Servo-Puls und kümmert 
 	else
 	{
 		// SERVO_PORT |= ServoOutput[ServoId];	// die Puls für den neuen Servo auf HIGH	// alt
-		//(*(uint8_t *)(servoPort + sid_out)) |= servoPin[sid_out];	// die Puls für den neuen Servo auf HIGH
 
-		switch(servoPort[sid_out])
+		switch(servoPort[sid_out])		// Puls für den neuen Servo auf HIGH
 		{
 			case 'B':
 				PORTB |= (1<<servoPin[sid_out]);

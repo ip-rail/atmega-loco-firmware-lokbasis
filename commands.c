@@ -252,6 +252,12 @@ void befehl_auswerten(void)
 		wlan_puts(test);
 	}
 
+	else if(!strcmp_P(wlan_string, txtp_cmd_alive))	// <alive>
+	{
+		// grundsätzlich reicht es, wenn der Befehl als gültig gezählt wird (sonst: siehe else-Zweig: Zähler wird wieder vermindert)
+		//TODO: Auswerungen für Stromsparmodus
+	}
+
 
 
 	// TODO: ADCGPIO (adc_used) set,get,rückmeldung

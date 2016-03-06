@@ -17,6 +17,7 @@
 #define EEMEM __attribute__((section(".eeprom")))	// deshalb hier nochmal
 #endif
 
+#include <avr/eeprom.h>
 #include <avr/io.h>
 #include <string.h>		// für "strcmp"
 #include <stdlib.h>		// für "itoa"
@@ -130,6 +131,7 @@ const char txtp_cmd_servoset[] PROGMEM = "servoset:";
 const char txtp_cmd_gpioc[] PROGMEM = "gpioc:";
 const char txtp_cmd_fpwmset[] PROGMEM = "fpwmset:";
 const char txtp_cmd_fpwmget[] PROGMEM = "fpwmget";
+const char txtp_cmd_alive[] PROGMEM = "alive";
 
 
 int main(void)
@@ -142,7 +144,7 @@ int main(void)
 
 	// ========================  Hardware Initialisierung  ========================================================
 
-	eeprom_checkversion();	// eeprom checken, ggf. vorbereiten
+	eeprom_checkversion();	// TODO:  wieder aktivieren: eeprom checken, ggf. vorbereiten
 
 	maxalivesecs = eeprom_getAliveCheckSecs();	//Intervall für Alivecheck - nach x Sekunden stoppen
 
@@ -164,12 +166,12 @@ int main(void)
 
 	init_adc();
 	initServo();
-	Servo_start();	// Signalgenerierung starten
-
 	init_gpios();		// frei verfügbare GPIOs als Ausgang definieren (nach Servos, ADC)
 						//falls nichts Anderes konfiguriert wird, wird nur der komplette Port C als Ausgang definiert
 
 	sei();	// Interrupts aufdrehen
+
+	Servo_start();	// Signalgenerierung starten
 
 	// ========================  Hardware Initialisierung abgeschlossen  ================================================
 
