@@ -10,4 +10,4 @@ Firmware for ATMega2561 loco controller with serial WIFI module (Wiz610wi/Raspbe
 - [ ] Spannungs Überwachung
 
 * [Pin-Belegung im Wiki](https://github.com/ip-rail/wiki/wiki/UC02-Belegung-lokbasis)
-* [Funktionen im Detail](../wiki/wiki/Funktionen-Lokbasis)
+* [Funktionen im Detail](../../wiki/wiki/Funktionen-Lokbasis)
