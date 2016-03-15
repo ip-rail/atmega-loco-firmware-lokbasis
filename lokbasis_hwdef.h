@@ -24,7 +24,7 @@
 #define WLAN_EXTRA		// Wiznet Wiz610wi (oder anderes WLAN-Modul)
 //#define WLAN_RASPI			// Raspi (WLAN über selbe UART wie Bootloader)
 #define PHB01_MOTOR1		// Motorcontroller PHB01: H-Brücke wird für Motor 1 verwendet
-//#define PHB01_MOTOR2		// Motorcontroller PHB01: eine 2. H-Brücke wird für Motor 2 verwendet
+#define PHB01_MOTOR2		// Motorcontroller PHB01: eine 2. H-Brücke wird für Motor 2 verwendet
 //#define UART_NR_RFID 1	// uart1 für RFID
 //#define LEDC_TLC59116	1	//LED-Controller TLC59116 ist vorhanden (es kann derzeit nur einer davon verwendet werden. entweder PCA9622 oder TLC59116!!)
 #define LEDC_PCA9622	1	//LED-Controller PCA9622 ist vorhanden
@@ -68,7 +68,15 @@
 
 #define PIN_MOTOR PINA
 
-#define MOTOR_PWMF_STD	8	// Motor-PWM-Frequenz Standardwert: Mode 8: 15656Hz
+#define MOTOR_PWMF_STD		8	// Motor-PWM-Frequenz Standardwert: Mode 8: 15656Hz
+#define MOTOR_CONFIG_1HB	8	// Konfig H-Brücken Stdwert = 8 für 1 H-Brücke (incl. Fehlerrückmeldung)
+#define MOTOR_CONFIG_2HB	25	// Konfig H-Brücken wert = 25 für 2 H-Brücken (incl. Fehlerrückmeldung)
+
+//Bits des motor_cfg:
+#define MOTOR_CFG_USE_HBRIDGE2		1
+#define MOTOR_CFG_HBRIDGE_MODE		6	// 2bit - wird noch nicht benutzt
+#define MOTOR_CFG_CHECK_ERR_HB1		8
+#define MOTOR_CFG_CHECK_ERR_HB2		16
 
 
 //ADC

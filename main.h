@@ -45,6 +45,7 @@ extern unsigned char speedstep_korrektur;
 // extern volatile unsigned char motor_reg;	// Variable für Motor-Regelung ein/aus (auch für isr verwendet)
 extern uint8_t motorerror;					// Errorcode von Motorcontroller: 0 = kein Error
 extern uint8_t motor_pwmf;					// Auswahl der Motor-PWM-Frequenz
+extern uint8_t motor_cfg;					// Konfig H-Brücken
 extern uint8_t alivecount;					// zählt die empfangen Meldungen der Gegenstelle (wird zyklisch ausgewertet)
 extern char wlan_string[UART_MAXSTRLEN+1];  // globaler String zum Abspeichern des vom WLAN empfangen Strings in read_wlan
 
@@ -70,6 +71,7 @@ extern const char txtp_hwi[];
 extern const char txtp_cmd_servoi[];
 extern const char txtp_cmd_ui[];
 extern const char txtp_cmd_fpwmi[];
+extern const char txtp_cmd_mcfgi[];
 
 //Befehle im Flash
 extern const char txtp_cmd_stop[];
@@ -95,5 +97,7 @@ extern const char txtp_cmd_gpioc[];
 extern const char txtp_cmd_fpwmset[];
 extern const char txtp_cmd_fpwmget[];
 extern const char txtp_cmd_alive[];
+extern const char txtp_cmd_mcfgget[];
+extern const char txtp_cmd_mcfgset[];
 
 #endif /* MAIN_H_ */

@@ -122,12 +122,18 @@ void init_uart(uint8_t uartnr, const unsigned int uartsetting)
 
 void init_motorctrl(void)
 {
+	motor_cfg = eeprom_getMotorConfig();
+
 
 #if defined( HW_UC02 )	//WLANcroc H-Brücke
 
 	#if defined( PHB01_MOTOR1 )
 		DDR_MOTOR |= (1<<MOTOR1_DIR) | (1<<MOTOR1_RESET);	// als Ausgänge setzen - nur 1 H-Brücke
-		DDR_MOTOR &= ~((1<<MOTOR1_FF1) | (1<<MOTOR1_FF2));	// Fehlerpins als Eingänge setzen
+
+		if (motor_cfg & MOTOR_CFG_CHECK_ERR_HB1)
+		{
+			DDR_MOTOR &= ~((1<<MOTOR1_FF1) | (1<<MOTOR1_FF2));	// Fehlerpins als Eingänge setzen
+		}
 
 		//PORT_MOTOR |= (1<<MOTOR1_DIR);	// Richtung auf 1 setzen // je nach Motorcontroller
 		PORT_MOTOR &= ~(1<<MOTOR1_DIR);   	// Motor-Richtung auf 0 // bei diesem Controller: vorwärts
@@ -136,13 +142,19 @@ void init_motorctrl(void)
 	#endif
 
 	#if defined( PHB01_MOTOR2 )
-		DDR_MOTOR |= (1<<MOTOR2_DIR) | (1<<MOTOR2_RESET);	// als Ausgänge setzen
-		DDR_MOTOR &= ~((1<<MOTOR2_FF1)  | (1<<MOTOR2_FF2));	// Fehlerpins als Eingänge setzen
+		if (motor_cfg & MOTOR_CFG_USE_HBRIDGE2)
+		{
+			DDR_MOTOR |= (1<<MOTOR2_DIR) | (1<<MOTOR2_RESET);	// als Ausgänge setzen
 
-		//PORT_MOTOR |= (1<<MOTOR2_DIR);	// Richtung auf 1 setzen // je nach Motorcontroller
-		PORT_MOTOR &= ~(1<<MOTOR2_DIR);   	// Motor-Richtung auf 0 // bei diesem Controller: vorwärts
-		PORT_MOTOR |= (1<<MOTOR2_RESET);	// Reset auf HI
+			if (motor_cfg & MOTOR_CFG_CHECK_ERR_HB2)
+			{
+				DDR_MOTOR &= ~((1<<MOTOR2_FF1)  | (1<<MOTOR2_FF2));	// Fehlerpins als Eingänge setzen
+			}
 
+			//PORT_MOTOR |= (1<<MOTOR2_DIR);	// Richtung auf 1 setzen // je nach Motorcontroller
+			PORT_MOTOR &= ~(1<<MOTOR2_DIR);   	// Motor-Richtung auf 0 // bei diesem Controller: vorwärts
+			PORT_MOTOR |= (1<<MOTOR2_RESET);	// Reset auf HI
+		}
 	#endif
 
 		// Timer 1 für Motor-PWM initialisieren --------------------------------------
@@ -185,8 +197,12 @@ void init_pwm(char freq_pwm)	// Timer 1 für Motor-PWM initialisieren
 	#endif
 
 	#if defined( PHB01_MOTOR2 )
-		DDR_MOTOR_PWM |= (1<<MOTOR2_PWM);	// als Ausgang setzen - 2. H-Brücke
-		MOTOR2_OCR = 0;
+		if (motor_cfg & MOTOR_CFG_USE_HBRIDGE2)
+		{
+			DDR_MOTOR_PWM |= (1<<MOTOR2_PWM);	// als Ausgang setzen - 2. H-Brücke
+			MOTOR2_OCR = 0;
+		}
+
 	#endif
 
 	//clearbit(PRR0,PRTIM1);	// Power Reduction für Timer 1 deaktivieren
@@ -297,13 +313,22 @@ void init_pwm(char freq_pwm)	// Timer 1 für Motor-PWM initialisieren
 void motor_sleep(void)
 {
 	PORT_MOTOR &= ~(1<<MOTOR1_RESET);	// Reset auf LO
+
 	//TODO: Motor2 fehlt noch
+	#if defined( PHB01_MOTOR2 )
+		if (motor_cfg & MOTOR_CFG_USE_HBRIDGE2) { PORT_MOTOR &= ~(1<<MOTOR2_RESET); }
+	#endif
 }
 
 // Motorcontroller PHB01 aus Schlafmodus aufwecken (dauert ca. 3ms)
 void motor_wakeup(void)
 {
 	PORT_MOTOR |= (1<<MOTOR1_RESET);	// Reset auf HI
+
+	#if defined( PHB01_MOTOR2 )
+		if (motor_cfg & MOTOR_CFG_USE_HBRIDGE2) { PORT_MOTOR |= (1<<MOTOR2_RESET); }
+	#endif
+
 	//warte_ms(4);	// TODO: Wartezeit sinnvoll?
 }
 
@@ -311,8 +336,18 @@ void motor_wakeup(void)
 void motor_reset(void)
 {
 	PORT_MOTOR &= ~(1<<MOTOR1_RESET);	// Reset auf LO
+
+	#if defined( PHB01_MOTOR2 )
+		if (motor_cfg & MOTOR_CFG_USE_HBRIDGE2) { PORT_MOTOR &= ~(1<<MOTOR2_RESET); }
+	#endif
+
 	_delay_us(1);	// LO für 1µs
+
 	PORT_MOTOR |= (1<<MOTOR1_RESET);	// Reset auf HI
+
+	#if defined( PHB01_MOTOR2 )
+		if (motor_cfg & MOTOR_CFG_USE_HBRIDGE2) { PORT_MOTOR |= (1<<MOTOR2_RESET); }
+	#endif
 }
 
 
@@ -324,13 +359,19 @@ void checkMotorStatus()
 	motorerror = 0;
 	char test[UART_MAXSTRLEN+1];
 
-	if (PIN_MOTOR & (1<<MOTOR1_FF1)) { motorerror |= 1; } 	else { motorerror &= ~1; }	// bit 0
-	if (PIN_MOTOR & (1<<MOTOR1_FF2)) { motorerror |= 2; } 	else { motorerror &= ~2; }	// bit 1
+	if (motor_cfg & MOTOR_CFG_CHECK_ERR_HB1)
+	{
+		if (PIN_MOTOR & (1<<MOTOR1_FF1)) { motorerror |= 1; } 	// bit 0
+		if (PIN_MOTOR & (1<<MOTOR1_FF2)) { motorerror |= 2; } 	// bit 1
+	}
+
 
 	#if defined( PHB01_MOTOR2 )
-
-			if (PIN_MOTOR & (1<<MOTOR2_FF1)) { motorerror |= 4; } 	else { motorerror &= ~4; }	// bit 2
-			if (PIN_MOTOR & (1<<MOTOR2_FF2)) { motorerror |= 8; } 	else { motorerror &= ~8; }	// bit 3
+		if (motor_cfg & MOTOR_CFG_CHECK_ERR_HB2)
+		{
+			if (PIN_MOTOR & (1<<MOTOR2_FF1)) { motorerror |= 4; } 	// bit 2
+			if (PIN_MOTOR & (1<<MOTOR2_FF2)) { motorerror |= 8; } 	// bit 3
+		}
 	#endif	// PHB01_MOTOR2
 
 

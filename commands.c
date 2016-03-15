@@ -237,8 +237,9 @@ void befehl_auswerten(void)
 		{
 			motor_pwmf = pwmf_new;
 			eeprom_update_MotorPWMf(motor_pwmf);
-			speed_soll = 0;
-			if (speed != 0) { warte_ms(1000); }	// zur Sicherheit warten, bis Lok steht -> 1s Zeit geben
+			// speed_soll = 0;
+			// if (speed != 0) { warte_ms(1000); }	// zur Sicherheit warten, bis Lok steht -> 1s Zeit geben
+			// TODO: hier warten usw. geht nicht - checken, wie sich das in Fahrt verhält
 			init_pwm(motor_pwmf);		// neuen PWM-Modus setzen
 		}
 	}
@@ -256,6 +257,34 @@ void befehl_auswerten(void)
 	{
 		// grundsätzlich reicht es, wenn der Befehl als gültig gezählt wird (sonst: siehe else-Zweig: Zähler wird wieder vermindert)
 		//TODO: Auswerungen für Stromsparmodus
+	}
+
+	else if(!strcmp_P(wlan_string, txtp_cmd_mcfgget))	// <mcfgget> -> motor_cfg config-byte übermitteln
+	{
+		strlcpy_P(test, txtp_cmd_mcfgi, 8);				// "<mcfgi:" //bei der Länge immer 0-Zeichen mitzählen!
+		itoa(motor_cfg, test+7, 10);
+		strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1);	// will länge des kompletten "test" buffers+0
+		wlan_puts(test);
+	}
+
+	else if(!strncmp_P(wlan_string, txtp_cmd_mcfgset, 8))	// "mcfgset:" Setzen einer H-Brücken Konfiguration
+	{
+		int zahl = 0;
+		uint8_t motor_cfg_alt = motor_cfg;
+
+		strncpy(test, wlan_string+8, strlen(wlan_string+8)); 		// die beliebig lange Zahl rauskopiern
+
+		zahl = atoi(test);
+		if ((zahl < 8) || (zahl > 255)) { zahl = MOTOR_CONFIG_1HB; }	// wenn etwas nicht passt -> Standardwert
+		// TODO: Fehler rückmelden, wenn die Zahl für motor_cfg nicht passt
+
+		if (motor_cfg_alt != motor_cfg)	// bei Änderung umstellen und speichern
+		{
+			motor_cfg = (uint8_t)zahl;
+			eeprom_update_MotorConfig(motor_cfg);
+			init_motorctrl(); 	// TODO: checken, wie sich das in Fahrt verhält
+		}
+
 	}
 
 

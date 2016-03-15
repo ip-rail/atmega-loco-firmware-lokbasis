@@ -16,8 +16,9 @@
 #define EEDATA_ADR_VERSION			EEDATA_ADR_START + 4
 #define EEDATA_ADR_ADCUSED			EEDATA_ADR_VERSION + 2
 #define EEDATA_ADR_MOTOR_PWMF		EEDATA_ADR_ADCUSED + 1
+#define EEDATA_ADR_MOTOR_CONFIG		EEDATA_ADR_MOTOR_PWMF + 1
 
-#define EEDATA_ADR_ALIVE_SECS		EEDATA_ADR_MOTOR_PWMF + 1
+#define EEDATA_ADR_ALIVE_SECS		EEDATA_ADR_MOTOR_CONFIG + 1
 
 #define EEDATA_ADR_SERVO_MODE		EEDATA_ADR_ALIVE_SECS + 1
 #define EEDATA_ADR_SERVO_COUNT		EEDATA_ADR_SERVO_MODE + 1
@@ -32,7 +33,7 @@
 #define EEDATA_ADR_OWNERNAME		EEDATA_ADR_LOKNAME + EEDATA_MAXSTRLEN
 
 #define EE_MAGIC_CODE	0xAABBCCDD	// Kennzeichnung, dass EEPROM bereits gültige Daten enthält
-#define EEDATA_VERSION	3			// aktuelle Version der Daten(Struktur)
+#define EEDATA_VERSION	4			// aktuelle Version der Daten(Struktur)
 
 
 extern void eeprom_checkversion();
@@ -50,6 +51,8 @@ extern uint8_t  eeprom_getADCGPIO();
 extern void  eeprom_update_ADCGPIO(const uint8_t adcmask);
 extern uint8_t eeprom_getMotorPWMf();
 extern void eeprom_update_MotorPWMf(const uint8_t pwmf);
+extern uint8_t eeprom_getMotorConfig();
+extern void eeprom_update_MotorConfig(const uint8_t mconfig);
 extern uint8_t eeprom_getAliveCheckSecs();
 extern void eeprom_update_AliveCheckSecs(const uint8_t secs);
 extern uint8_t eeprom_getGPIO(char port);

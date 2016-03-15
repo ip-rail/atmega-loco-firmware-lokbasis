@@ -76,7 +76,7 @@ uint8_t maxalivesecs = 3;			// Einstellung für den Alive-check [Sekunden, die d
 // volatile unsigned char motor_reg = 1;	// TODO: Variable für Motor-Regelung ein/aus (auch für isr verwendet) [aktivieren, wenn benötigt]
 uint8_t motorerror = 0;					// Errorcode von Motorcontroller: 0 = kein Error
 uint8_t motor_pwmf = MOTOR_PWMF_STD;	// Auswahl der Motor-PWM-Frequenz Wert 1 bis 9 (siehe: Tabelle in funktionen.c)
-
+uint8_t motor_cfg = MOTOR_CONFIG_1HB;	// Konfig H-Brücken Stdwert = 8 für 1 H-Brücke (25 für 2 H-Brücken) siehe Wiki für Details
 //ADC
 volatile uint8_t adcchannel = 0;		// aktueller ADC channel 0-7
 uint8_t adc_mask = 0;					// die benützten ADC Channels (siehe auch: adc_used in eedata.c), kein volatile, da sich der Wert im Betrieb nicht ändert
@@ -107,6 +107,7 @@ const char txtp_hwi[] PROGMEM = "<hwi:01>";					// Antwort auf <hwget> 01 = Boar
 const char txtp_cmd_servoi[] PROGMEM = "<servoi:";			// Antwort auf <servoget>
 const char txtp_cmd_ui[] PROGMEM = "<ui:";					// Rückmeldung Spannungswerte
 const char txtp_cmd_fpwmi[] PROGMEM = "<fpwmi:";			// Rückmeldung Motor-PWM-Frequenz
+const char txtp_cmd_mcfgi[] PROGMEM = "<mcfgi:";			// Rückmeldung H-Brücken Konfig
 
 // Befehle - Strings für auswertung, daher ohne spitze Klammern
 const char txtp_cmd_stop[] PROGMEM = "stop";
@@ -132,7 +133,8 @@ const char txtp_cmd_gpioc[] PROGMEM = "gpioc:";
 const char txtp_cmd_fpwmset[] PROGMEM = "fpwmset:";
 const char txtp_cmd_fpwmget[] PROGMEM = "fpwmget";
 const char txtp_cmd_alive[] PROGMEM = "alive";
-
+const char txtp_cmd_mcfgget[] PROGMEM = "mcfgget";
+const char txtp_cmd_mcfgset[] PROGMEM = "mcfgset:";
 
 int main(void)
 {
