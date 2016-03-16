@@ -92,7 +92,7 @@ uint8_t  gpios_g;		//
 
 // LokData im Flash
 const char dev_swname[] PROGMEM = "lokbasis";     	// -> keine Änderung durch User -> flash
-const char dev_swversion[] PROGMEM = "4";   		// -> keine Änderung durch User -> flash
+const char dev_swversion[] PROGMEM = "5";   		// -> keine Änderung durch User -> flash
 
 //Strings im Flash für CMD-Rückmeldungen über WLAN
 const char txtp_cmdend[] PROGMEM = ">";						// Befehlsende-Zeichen
@@ -108,6 +108,8 @@ const char txtp_cmd_servoi[] PROGMEM = "<servoi:";			// Antwort auf <servoget>
 const char txtp_cmd_ui[] PROGMEM = "<ui:";					// Rückmeldung Spannungswerte
 const char txtp_cmd_fpwmi[] PROGMEM = "<fpwmi:";			// Rückmeldung Motor-PWM-Frequenz
 const char txtp_cmd_mcfgi[] PROGMEM = "<mcfgi:";			// Rückmeldung H-Brücken Konfig
+const char txtp_cmd_log[] PROGMEM = "<log:";				// Rückmeldung Log-Text
+
 
 // Befehle - Strings für auswertung, daher ohne spitze Klammern
 const char txtp_cmd_stop[] PROGMEM = "stop";

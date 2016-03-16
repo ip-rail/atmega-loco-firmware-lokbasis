@@ -270,21 +270,25 @@ void befehl_auswerten(void)
 	else if(!strncmp_P(wlan_string, txtp_cmd_mcfgset, 8))	// "mcfgset:" Setzen einer H-Brücken Konfiguration
 	{
 		int zahl = 0;
-		uint8_t motor_cfg_alt = motor_cfg;
+		uint8_t motor_cfg_neu;
 
 		strncpy(test, wlan_string+8, strlen(wlan_string+8)); 		// die beliebig lange Zahl rauskopiern
 
 		zahl = atoi(test);
-		if ((zahl < 8) || (zahl > 255)) { zahl = MOTOR_CONFIG_1HB; }	// wenn etwas nicht passt -> Standardwert
-		// TODO: Fehler rückmelden, wenn die Zahl für motor_cfg nicht passt
+		motor_cfg_neu = (uint8_t)zahl;
 
-		if (motor_cfg_alt != motor_cfg)	// bei Änderung umstellen und speichern
+		if ((motor_cfg_neu < 8) || (motor_cfg_neu > 255))
 		{
-			motor_cfg = (uint8_t)zahl;
+			motor_cfg_neu = MOTOR_CONFIG_1HB; // wenn etwas nicht passt -> Standardwert
+			wlan_puts("<log:motor_cfg passt nicht!>");	// TODO: check Befehl für: Fehler rückmelden, wenn die Zahl für motor_cfg nicht passt
+		}
+
+		if (motor_cfg_neu != motor_cfg)	// bei Änderung umstellen und speichern
+		{
+			motor_cfg = motor_cfg_neu;
 			eeprom_update_MotorConfig(motor_cfg);
 			init_motorctrl(); 	// TODO: checken, wie sich das in Fahrt verhält
 		}
-
 	}
 
 
