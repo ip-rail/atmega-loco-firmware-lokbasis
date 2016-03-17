@@ -109,7 +109,7 @@ const char txtp_cmd_ui[] PROGMEM = "<ui:";					// Rückmeldung Spannungswerte
 const char txtp_cmd_fpwmi[] PROGMEM = "<fpwmi:";			// Rückmeldung Motor-PWM-Frequenz
 const char txtp_cmd_mcfgi[] PROGMEM = "<mcfgi:";			// Rückmeldung H-Brücken Konfig
 const char txtp_cmd_log[] PROGMEM = "<log:";				// Rückmeldung Log-Text
-
+const char txtp_cmd_ntypi[] PROGMEM = "<ntypi:1>";			// Rückmeldung Netzwerk-Typ
 
 // Befehle - Strings für auswertung, daher ohne spitze Klammern
 const char txtp_cmd_stop[] PROGMEM = "stop";

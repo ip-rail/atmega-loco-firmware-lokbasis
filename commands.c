@@ -155,7 +155,11 @@ void befehl_auswerten(void)
 		}
 	}
 
-	else if(!strcmp_P(wlan_string, txtp_cmd_hwget))	{ wlan_puts_p(txtp_hwi); }	//  für das UC02 Board mit "<hwi:01>" antworten
+	else if(!strcmp_P(wlan_string, txtp_cmd_hwget))
+	{
+		wlan_puts_p(txtp_hwi); //  für das UC02 Board mit "<hwi:01>" antworten
+		wlan_puts_p(txtp_cmd_ntypi);	// Netzwerk-Typ (dummes WLAN-Modul)
+	}
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_servoget))		// servoget - Servo-Konfiguration wird angefordert
 	{

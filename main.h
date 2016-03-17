@@ -73,6 +73,7 @@ extern const char txtp_cmd_ui[];
 extern const char txtp_cmd_fpwmi[];
 extern const char txtp_cmd_mcfgi[];
 extern const char txtp_cmd_log[];
+extern const char txtp_cmd_ntypi[];
 
 //Befehle im Flash
 extern const char txtp_cmd_stop[];
