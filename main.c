@@ -110,6 +110,8 @@ const char txtp_cmd_fpwmi[] PROGMEM = "<fpwmi:";			// Rückmeldung Motor-PWM-Fre
 const char txtp_cmd_mcfgi[] PROGMEM = "<mcfgi:";			// Rückmeldung H-Brücken Konfig
 const char txtp_cmd_log[] PROGMEM = "<log:";				// Rückmeldung Log-Text
 const char txtp_cmd_ntypi[] PROGMEM = "<ntypi:1>";			// Rückmeldung Netzwerk-Typ
+const char txtp_cmd_onamei[] PROGMEM = "<onamei:";			// Rückmeldung Besitzer-Name
+const char txtp_cmd_alivei[] PROGMEM = "<alivei:";			// Rückmeldung Wert für das alive-Timeout
 
 // Befehle - Strings für auswertung, daher ohne spitze Klammern
 const char txtp_cmd_stop[] PROGMEM = "stop";
@@ -137,6 +139,10 @@ const char txtp_cmd_fpwmget[] PROGMEM = "fpwmget";
 const char txtp_cmd_alive[] PROGMEM = "alive";
 const char txtp_cmd_mcfgget[] PROGMEM = "mcfgget";
 const char txtp_cmd_mcfgset[] PROGMEM = "mcfgset:";
+const char txtp_cmd_nameget[] PROGMEM = "nameget";
+const char txtp_cmd_onameget[] PROGMEM = "onameget";
+const char txtp_cmd_aliveget[] PROGMEM = "aliveget";
+const char txtp_cmd_aliveset[] PROGMEM = "aliveset:";
 
 int main(void)
 {

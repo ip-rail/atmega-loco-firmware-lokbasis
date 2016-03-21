@@ -121,6 +121,11 @@ void eeprom_update_oname(const char *data)
 	}
 }
 
+void eeprom_get_oname(char *name)
+{
+	eeprom_read_block((void*)name, (void*)EEDATA_ADR_OWNERNAME, EEDATA_MAXSTRLEN);
+}
+
 void eeprom_update_lname(const char *data)
 {
 	uint16_t datasize = strlen(data);
@@ -131,6 +136,10 @@ void eeprom_update_lname(const char *data)
 	}
 }
 
+void eeprom_get_lname(char *name)
+{
+	eeprom_read_block((void*)name, (void*)EEDATA_ADR_LOKNAME, EEDATA_MAXSTRLEN);
+}
 
 void eeprom_getServoMode()
 {

@@ -74,6 +74,8 @@ extern const char txtp_cmd_fpwmi[];
 extern const char txtp_cmd_mcfgi[];
 extern const char txtp_cmd_log[];
 extern const char txtp_cmd_ntypi[];
+extern const char txtp_cmd_onamei[];
+extern const char txtp_cmd_alivei[];
 
 //Befehle im Flash
 extern const char txtp_cmd_stop[];
@@ -101,5 +103,9 @@ extern const char txtp_cmd_fpwmget[];
 extern const char txtp_cmd_alive[];
 extern const char txtp_cmd_mcfgget[];
 extern const char txtp_cmd_mcfgset[];
+extern const char txtp_cmd_nameget[];
+extern const char txtp_cmd_onameget[];
+extern const char txtp_cmd_aliveget[];
+extern const char txtp_cmd_aliveset[];
 
 #endif /* MAIN_H_ */

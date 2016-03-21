@@ -5,29 +5,36 @@
  *      Author: Michael Brunnbauer
  */
 
-#include <avr/io.h>
-#include <string.h>		// für "strcmp"
-#include <stdlib.h>		// für "itoa"
-#include <util/delay.h>	// für delay_ms()
-#include <avr/interrupt.h>
-#include <avr/pgmspace.h>
-#include <avr/eeprom.h>
-#include <avr/wdt.h>	//für Watchdog Reset
-
-#include "lokbasis_hwdef.h"		// Hardware-Definitionen für die verschiedenen Boards
-#include "main.h"
 #include "commands.h"
-#include "uart.h"
-#include "wlan.h"
-#include "funktionen.h"	// Funktionen für Hauptschleife und commands.c
-#include "ledc.h"
+
+//#include <avr/eeprom.h>
+//#include <avr/interrupt.h>
+#include <avr/interrupt.h>
+//#include <avr/io.h>
+#include <avr/iomxx0_1.h>
+//#include <avr/pgmspace.h>
+#include <avr/pgmspace.h>
+//#include <avr/wdt.h>	//für Watchdog Reset
+#include <avr/wdt.h>
+#include <stdint.h>
+//#include <stdlib.h>		// für "itoa"
+#include <stdlib.h>
+#include <string.h>
+//#include <string.h>		// für "strcmp"
+//#include <util/delay.h>	// für delay_ms()
+
 #include "eedata.h"
+#include "funktionen.h"	// Funktionen für Hauptschleife und commands.c#include "ledc.h"
+#include "lokbasis_hwdef.h"		// Hardware-Definitionen für die verschiedenen Boards#include "main.h"
 #include "servo.h"
+//#include "uart.h"
+#include "wlan.h"
 
 //-----------------------------------------------------------------------------------------
 // befehl_auswerten: wlan_string wird ausgewertet und der Befehl umgesetzt
 // es darf nur ein einziger gültiger Befehl vorhanden sein -> daher aufruf aus check_wlan_cmd()
 // die <> sind bereits entfernt!!!
+// TODO: strlcpy,strlcat: https://www.sudo.ws/todd/papers/strlcpy.html statt strncpy..
 //-----------------------------------------------------------------------------------------
 void befehl_auswerten(void)
 {
@@ -113,46 +120,28 @@ void befehl_auswerten(void)
 
 	else if(!strncmp_P(wlan_string, txtp_cmd_onameset, 9))	// "onameset:" set owner name in eeprom
 	{
-		static char datatxt[EEDATA_MAXSTRLEN];
+		eeprom_update_oname(wlan_string+9);
+	}
 
-		if (!strncmp_P(wlan_string+9, txtp_cmddata_start, 6))	// "start:"
-		{
-			memset(datatxt, 0, EEDATA_MAXSTRLEN);	// string leeren
-			strncpy(datatxt, wlan_string+15, strlen(wlan_string+15));
-		}
-		else if(!strncmp_P(wlan_string+9, txtp_cmddata_start, 4))	// "add"
-		{
-			strlcat(datatxt, wlan_string+13, EEDATA_MAXSTRLEN); // (will Länge des kompletten destination buffers+0!!)
-		}
-		else if(!strncmp_P(wlan_string+9, txtp_cmddata_start, 4))	// "end"
-		{
-			strlcat(datatxt, wlan_string+13, EEDATA_MAXSTRLEN);
-			//datatxt enthält jetzt den kompletten Namen!
-			eeprom_update_oname(datatxt);
-			// TODO: wird im Betrieb auch benötigt??
-		}
+	else if(!strcmp_P(wlan_string, txtp_cmd_onameget))	// "onameget"
+	{
+		strlcpy_P(test, txtp_cmd_onamei, sizeof(test));
+		eeprom_get_oname(test+8);
+		strlcat_P(test, txtp_cmdend, sizeof(test));	// will länge des kompletten "test" buffers+0
+		wlan_puts(test);
 	}
 
 	else if(!strncmp_P(wlan_string, txtp_cmd_nameset, 8))	// "nameset:" set loco name in eeprom
 	{
-		static char datatxt[EEDATA_MAXSTRLEN];
+		eeprom_update_lname(wlan_string+8);	// TODO: wird lokname im Betrieb auch benötigt??
+	}
 
-		if (!strncmp_P(wlan_string+8, txtp_cmddata_start, 6))	// "start:"
-		{
-			memset(datatxt, 0, EEDATA_MAXSTRLEN);	// string leeren
-			strncpy(datatxt, wlan_string+14, strlen(wlan_string+14));
-		}
-		else if(!strncmp_P(wlan_string+8, txtp_cmddata_start, 4))	// "add"
-		{
-			strlcat(datatxt, wlan_string+12, EEDATA_MAXSTRLEN); // (will Länge des kompletten destination buffers+0!!)
-		}
-		else if(!strncmp_P(wlan_string+8, txtp_cmddata_start, 4))	// "end"
-		{
-			strlcat(datatxt, wlan_string+12, EEDATA_MAXSTRLEN);
-			//datatxt enthält jetzt den kompletten Namen!
-			eeprom_update_lname(datatxt);
-			// TODO: wird im Betrieb auch benötigt??
-		}
+	else if(!strcmp_P(wlan_string, txtp_cmd_nameget))	// "nameget"
+	{
+		strlcpy_P(test, txtp_iam, sizeof(test));
+		eeprom_get_lname(test+7);
+		strlcat_P(test, txtp_cmdend, sizeof(test));	// will länge des kompletten "test" buffers+0
+		wlan_puts(test);
 	}
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_hwget))
@@ -165,21 +154,21 @@ void befehl_auswerten(void)
 	{
 		uint8_t i;
 		char strbuffer[10];
-		strlcpy_P(test, txtp_cmd_servoi, 9);	// Rückmeldung per <servoi:mode:count:*port0**pin0*:..>
+		strlcpy_P(test, txtp_cmd_servoi, sizeof(test));	// Rückmeldung per <servoi:mode:count:*port0**pin0*:..>
 		itoa(servo_mode, strbuffer, 10);
-		strlcat(test, strbuffer, UART_MAXSTRLEN+1);	// will länge des kompletten "test" buffers+0
-		strlcat_P(test, txtp_cmdtrenn, UART_MAXSTRLEN+1);
+		strlcat(test, strbuffer, sizeof(test));	// will länge des kompletten "test" buffers+0
+		strlcat_P(test, txtp_cmdtrenn, sizeof(test));
 		itoa(servo_count, test+9, 10);
 
 		for( i = 0; i < servo_count; i++ )
 		{
-			strlcat_P(test, txtp_cmdtrenn, UART_MAXSTRLEN+1);
+			strlcat_P(test, txtp_cmdtrenn, sizeof(test));
 			strbuffer[0] = servoPort[i];
 			strbuffer[1] = servoPin[i] + 48;	// einfache ASCII-Konvertierung "0" ist ASCII-Code 48
-			strbuffer[1] = 0;					//String Terminierung
-			strlcat(test, strbuffer, UART_MAXSTRLEN+1);
+			strbuffer[2] = 0;					//String Terminierung
+			strlcat(test, strbuffer, sizeof(test));
 		}
-		strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1);
+		strlcat_P(test, txtp_cmdend, sizeof(test));
 		wlan_puts(test);
 	}
 
@@ -220,7 +209,7 @@ void befehl_auswerten(void)
 		pinnr = (uint8_t)atoi(test);
 
 		memset(test, 0, UART_MAXSTRLEN+1);	// text wieder leeren
-		strncpy(test, wlan_string+8, 1);	//nur 1 Zeichen auswerten (wert)
+		strncpy(test, wlan_string+8, 1);	//nur 1 Zeichen auswerten (wert) -> ok, weil vorher test gelöscht wurde!!
 		pinval = (uint8_t)atoi(test);
 
 		if (pinval) { PORTC |= (1<<pinnr); }	// Pin auf 1 setzen
@@ -251,23 +240,47 @@ void befehl_auswerten(void)
 	else if(!strcmp_P(wlan_string, txtp_cmd_fpwmget))	// <fpwmget> PWM-Frequenz abfragen -> Rückmeldung <fpwmi:n>
 	{
 		// txtp_cmd_fpwmi[] PROGMEM = "<fpwmi:";
-		strlcpy_P(test, txtp_cmd_fpwmi, 8);	// Rückmeldung der Geschwindigkeit	//bei der Länge immer 0-Zeichen mitzählen!
+		strlcpy_P(test, txtp_cmd_fpwmi, sizeof(test));
 		itoa(motor_pwmf, test+7, 10);
-		strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1);	// will länge des kompletten "test" buffers+0
+		strlcat_P(test, txtp_cmdend, sizeof(test));	// will länge des kompletten "test" buffers+0
 		wlan_puts(test);
 	}
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_alive))	// <alive>
 	{
 		// grundsätzlich reicht es, wenn der Befehl als gültig gezählt wird (sonst: siehe else-Zweig: Zähler wird wieder vermindert)
-		//TODO: Auswerungen für Stromsparmodus
+		//TODO: Auswertungen für Stromsparmodus
 	}
+
+	else if(!strcmp_P(wlan_string, txtp_cmd_aliveget))	// "aliveget" Wert für das alive-Timeout -> Rückmeldung <alivei:*sekunden*>
+	{
+		// const char txtp_cmd_alivei[] PROGMEM = "<alivei:";
+		strlcpy_P(test, txtp_cmd_alivei, sizeof(test));
+		itoa(eeprom_getAliveCheckSecs(), test+8, 10);
+		strlcat_P(test, txtp_cmdend, sizeof(test));	// will länge des kompletten "test" buffers+0
+		wlan_puts(test);
+	}
+
+	else if(!strncmp_P(wlan_string, txtp_cmd_aliveset, 9))	// "aliveset:*sekunden*"  Wert für das alive-Timeout setzen
+	{
+		int zahl = 0;
+		strncpy(test, wlan_string+9, strlen(wlan_string+9)); 	// die beliebig lange Zahl rauskopiern (Achtung: wenn der buffer nicht leer ist, muss länge+1 angegeben werden!)
+		zahl = atoi(test);
+		if (zahl < 0) { zahl = 3; }
+
+		if (zahl != maxalivesecs)	// bei Änderung umstellen und speichern
+		{
+			maxalivesecs = zahl;
+			eeprom_update_AliveCheckSecs(maxalivesecs);
+		}
+	}
+
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_mcfgget))	// <mcfgget> -> motor_cfg config-byte übermitteln
 	{
-		strlcpy_P(test, txtp_cmd_mcfgi, 8);				// "<mcfgi:" //bei der Länge immer 0-Zeichen mitzählen!
+		strlcpy_P(test, txtp_cmd_mcfgi, sizeof(test));				// "<mcfgi:"
 		itoa(motor_cfg, test+7, 10);
-		strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1);	// will länge des kompletten "test" buffers+0
+		strlcat_P(test, txtp_cmdend, sizeof(test));	// will länge des kompletten "test" buffers+0
 		wlan_puts(test);
 	}
 
