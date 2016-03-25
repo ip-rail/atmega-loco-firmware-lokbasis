@@ -171,7 +171,6 @@ int main(void)
 	ledcontrol_init(LEDC1);	// LED-Controller TODO: Funktion testen
 	#endif	
 	
-	setbit(DDRD,PD6);	// Pin als Ausgang definieren - für Testsignal
 	setbit(DDRD,PD7);	// Pin als Ausgang definieren - für Testsignal
 
 	init_adc();

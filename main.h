@@ -47,6 +47,7 @@ extern uint8_t motorerror;					// Errorcode von Motorcontroller: 0 = kein Error
 extern uint8_t motor_pwmf;					// Auswahl der Motor-PWM-Frequenz
 extern uint8_t motor_cfg;					// Konfig H-Brücken
 extern uint8_t alivecount;					// zählt die empfangen Meldungen der Gegenstelle (wird zyklisch ausgewertet)
+extern uint8_t maxalivesecs;				// Einstellung für den Alive-check
 extern char wlan_string[UART_MAXSTRLEN+1];  // globaler String zum Abspeichern des vom WLAN empfangen Strings in read_wlan
 
 extern volatile uint8_t adcchannel;		// aktueller ADC channel 0-7
