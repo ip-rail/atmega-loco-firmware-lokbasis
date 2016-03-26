@@ -34,5 +34,7 @@ extern volatile unsigned int servoValue[SERVOCOUNTMAX];
 
 
 extern void initServo();
+extern void Servo_stop();
+extern void Servo_start();
 
 #endif /* SERVO_H_ */

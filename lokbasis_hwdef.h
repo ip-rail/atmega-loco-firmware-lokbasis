@@ -21,11 +21,10 @@
 
 // Konfiguration
 #define HW_UC02				// WLANcroc MC-Board
-//#define WLAN_WIZNET		// Wiznet Wiz610wi
-#define WLAN_RASPI			// Raspi
+#define WLAN_EXTRA		// Wiznet Wiz610wi (oder anderes WLAN-Modul)
+//#define WLAN_RASPI			// Raspi (WLAN über selbe UART wie Bootloader)
 #define PHB01_MOTOR1		// Motorcontroller PHB01: H-Brücke wird für Motor 1 verwendet
-//#define PHB01_MOTOR2		// Motorcontroller PHB01: eine 2. H-Brücke wird für Motor 2 verwendet
-#define UART_NR_WLAN 0		// uart0 für WLAN
+#define PHB01_MOTOR2		// Motorcontroller PHB01: eine 2. H-Brücke wird für Motor 2 verwendet
 //#define UART_NR_RFID 1	// uart1 für RFID
 //#define LEDC_TLC59116	1	//LED-Controller TLC59116 ist vorhanden (es kann derzeit nur einer davon verwendet werden. entweder PCA9622 oder TLC59116!!)
 #define LEDC_PCA9622	1	//LED-Controller PCA9622 ist vorhanden
@@ -46,8 +45,8 @@
 #define TESTSIGNAL2	PD6
 
 // Motorcontroller PHB01
-//#define MOTOR1_ADC 	PF7 	// Input, ADC6 Motor 1
-//#define MOTOR2_ADC 	PF6 	// Input,ADC7 Motor 2
+//#define MOTOR1_ADC 	PF7 	// Input, ADC7 Motor 1
+//#define MOTOR2_ADC 	PF6 	// Input, ADC6 Motor 2
 
 #define MOTOR1_DIR 	PA0 	// Output, Motor1 Richtung
 #define MOTOR2_DIR 	PA4 	// Output, Motor1 Richtung
@@ -67,7 +66,17 @@
 #define PORT_MOTOR		PORTA
 #define PORT_MOTOR_PWM	PORTB
 
-#define PIN_MOTOR PINC
+#define PIN_MOTOR PINA
+
+#define MOTOR_PWMF_STD		8	// Motor-PWM-Frequenz Standardwert: Mode 8: 15656Hz
+#define MOTOR_CONFIG_1HB	8	// Konfig H-Brücken Stdwert = 8 für 1 H-Brücke (incl. Fehlerrückmeldung)
+#define MOTOR_CONFIG_2HB	25	// Konfig H-Brücken wert = 25 für 2 H-Brücken (incl. Fehlerrückmeldung)
+
+//Bits des motor_cfg:
+#define MOTOR_CFG_USE_HBRIDGE2		1
+#define MOTOR_CFG_HBRIDGE_MODE		6	// 2bit - wird noch nicht benutzt
+#define MOTOR_CFG_CHECK_ERR_HB1		8
+#define MOTOR_CFG_CHECK_ERR_HB2		16
 
 
 //ADC
@@ -139,10 +148,8 @@
 //#define UART_BAUDRATE_WLAN	115200	// WLAN-Verbindung
 #define UART_BAUDRATE_WLAN	38400	// WLAN-Verbindung - nur für test
 
-#define UART_SETTING_RFID ((F_CPU/16L/UART_BAUDRATE_RFID)-1)	// Berechnung der UART Konfigurationsparameter
-#define UART_SETTING_WLAN ((F_CPU/16L/UART_BAUDRATE_WLAN)-1)
-
 // WLAN
+#define WLAN_UART_NR	0	//UART0
 #define WLAN_RX 	PE0 	// Input, Atmega RX, Wiznet Data out
 #define WLAN_TX 	PE1 	// Output, Atmega TX, Wiznet Data in
 #define DDR_WLAN	DDRE
@@ -151,5 +158,22 @@
 
 #endif	// WLAN_RASPI
 
+
+#if defined( WLAN_EXTRA )
+
+#define UART_BAUDRATE_RFID	9600
+#define UART_BAUDRATE_WLAN	38400
+
+#define WLAN_UART_NR	1	//UART1
+#define WLAN_RX 	PD2 	// Input, Atmega RX, Wiznet Data out
+#define WLAN_TX 	PD3 	// Output, Atmega TX, Wiznet Data in
+#define DDR_WLAN	DDRD
+#define PORT_WLAN	PORTD
+#define PIN_WLAN	PIND
+
+#endif	// WLAN_EXTRA
+
+#define UART_SETTING_RFID ((F_CPU/16L/UART_BAUDRATE_RFID)-1)	// Berechnung der UART Konfigurationsparameter
+#define UART_SETTING_WLAN ((F_CPU/16L/UART_BAUDRATE_WLAN)-1)
 
 #endif	// LOKBASIS_HWDEF_H_

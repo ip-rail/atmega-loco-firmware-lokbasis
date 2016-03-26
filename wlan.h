@@ -8,6 +8,9 @@
 #ifndef WLAN_H_
 #define WLAN_H_
 
+
+extern void wlan_puts_p(const char *progmem_s );
+extern void wlan_puts(const char *s );
 extern void check_wlan_cmd();
 //extern void read_wlan(uint8_t wait_sek);
 

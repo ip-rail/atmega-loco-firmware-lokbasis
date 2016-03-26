@@ -5,57 +5,60 @@
  *      Author: Michael Brunnbauer
  */
 
-#include <avr/io.h>
-#include <string.h>		// für "strcmp"
-#include <stdlib.h>		// für "itoa"
-#include <util/delay.h>	// für delay_ms()
-#include <avr/interrupt.h>
-#include <avr/pgmspace.h>
-#include <avr/eeprom.h>
-#include <avr/wdt.h>	//für Watchdog Reset
-
-#include "lokbasis_hwdef.h"		// Hardware-Definitionen für die verschiedenen Boards
-#include "main.h"
 #include "commands.h"
-#include "uart.h"
-#include "wlan.h"
-#include "funktionen.h"	// Funktionen für Hauptschleife und commands.c
-#include "ledc.h"
+
+//#include <avr/eeprom.h>
+//#include <avr/interrupt.h>
+#include <avr/interrupt.h>
+//#include <avr/io.h>
+#include <avr/iomxx0_1.h>
+//#include <avr/pgmspace.h>
+#include <avr/pgmspace.h>
+//#include <avr/wdt.h>	//für Watchdog Reset
+#include <avr/wdt.h>
+#include <stdint.h>
+//#include <stdlib.h>		// für "itoa"
+#include <stdlib.h>
+#include <string.h>
+//#include <string.h>		// für "strcmp"
+//#include <util/delay.h>	// für delay_ms()
+
 #include "eedata.h"
+#include "funktionen.h"	// Funktionen für Hauptschleife und commands.c#include "ledc.h"
+#include "lokbasis_hwdef.h"		// Hardware-Definitionen für die verschiedenen Boards#include "main.h"
 #include "servo.h"
+//#include "uart.h"
+#include "wlan.h"
 
 //-----------------------------------------------------------------------------------------
 // befehl_auswerten: wlan_string wird ausgewertet und der Befehl umgesetzt
 // es darf nur ein einziger gültiger Befehl vorhanden sein -> daher aufruf aus check_wlan_cmd()
 // die <> sind bereits entfernt!!!
+// TODO: strlcpy,strlcat: https://www.sudo.ws/todd/papers/strlcpy.html statt strncpy..
 //-----------------------------------------------------------------------------------------
 void befehl_auswerten(void)
 {
 	char test[UART_MAXSTRLEN+1];
+	uint8_t cmd_found = 1;	// checken, ob cmd behandelt wurde oder nicht
+
 	memset(test, 0, UART_MAXSTRLEN+1);	// text leeren
 	alivecount++;	// Meldungen von der Gegenstelle zählen (wenn es kein gültiger Befehl war, am Ende wieder --;
+	if (alivecount == 0) { alivecount++; }	// damit nach Überlauf der alivecount nicht 0 wird
 
-	uint8_t cmd_found = 1;	// checken, ob cmd behandelt wurde oder nicht
 
 	if(!strcmp_P(wlan_string, txtp_cmd_stop))	// "stop"
 	{
-		cli();
 		speed_soll = 0;
-		sei();
 	}
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_off))	// "off"
 	{
-		cli();
 		speed_soll = 0;
-		sei();
 	}
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_stopall))	// "stopall"
 	{
-		cli();
 		speed_soll = 0;
-		sei();
 	}
 
 	else if(!strncmp_P(wlan_string, txtp_cmd_richtung, 9))	//  "richtung:"
@@ -84,13 +87,13 @@ void befehl_auswerten(void)
 
 		zahl = atoi(test);
 		if ((zahl < 0) || (zahl > 1023)) { zahl = 0; }		// wenn etwas nicht passt
-
-		cli();
 		speed_soll = zahl;
-		sei();
 	}
 
-	else if(!strcmp_P(wlan_string, txtp_cmd_ping))	{ uart0_puts_p(txtp_pong); }	// "ping" - mit "<pong>" antworten
+	else if(!strcmp_P(wlan_string, txtp_cmd_ping))	// "ping" - mit "<pong>" antworten
+	{
+		wlan_puts_p(txtp_pong);
+	}
 
 	else if(!strncmp_P(wlan_string, txtp_cmd_l1, 3))	// "l1:" - <l1:*nummer*> Licht einschalten: Licht *Nummer* 1-16
 	{
@@ -117,71 +120,56 @@ void befehl_auswerten(void)
 
 	else if(!strncmp_P(wlan_string, txtp_cmd_onameset, 9))	// "onameset:" set owner name in eeprom
 	{
-		static char datatxt[EEDATA_MAXSTRLEN];
-
-		if (!strncmp_P(wlan_string+9, txtp_cmddata_start, 6))	// "start:"
-		{
-			memset(datatxt, 0, EEDATA_MAXSTRLEN);	// string leeren
-			strncpy(datatxt, wlan_string+15, strlen(wlan_string+15));
-		}
-		else if(!strncmp_P(wlan_string+9, txtp_cmddata_start, 4))	// "add"
-		{
-			strlcat(datatxt, wlan_string+13, EEDATA_MAXSTRLEN); // (will Länge des kompletten destination buffers+0!!)
-		}
-		else if(!strncmp_P(wlan_string+9, txtp_cmddata_start, 4))	// "end"
-		{
-			strlcat(datatxt, wlan_string+13, EEDATA_MAXSTRLEN);
-			//datatxt enthält jetzt den kompletten Namen!
-			eeprom_update_oname(datatxt);
-			// TODO: wird im Betrieb auch benötigt??
-		}
+		eeprom_update_oname(wlan_string+9);
 	}
 
-	else if(!strncmp_P(wlan_string, txtp_cmd_nameset, 8))	// "nameset:" set owner name in eeprom
+	else if(!strcmp_P(wlan_string, txtp_cmd_onameget))	// "onameget"
 	{
-		static char datatxt[EEDATA_MAXSTRLEN];
-
-		if (!strncmp_P(wlan_string+8, txtp_cmddata_start, 6))	// "start:"
-		{
-			memset(datatxt, 0, EEDATA_MAXSTRLEN);	// string leeren
-			strncpy(datatxt, wlan_string+14, strlen(wlan_string+14));
-		}
-		else if(!strncmp_P(wlan_string+8, txtp_cmddata_start, 4))	// "add"
-		{
-			strlcat(datatxt, wlan_string+12, EEDATA_MAXSTRLEN); // (will Länge des kompletten destination buffers+0!!)
-		}
-		else if(!strncmp_P(wlan_string+8, txtp_cmddata_start, 4))	// "end"
-		{
-			strlcat(datatxt, wlan_string+12, EEDATA_MAXSTRLEN);
-			//datatxt enth�lt jetzt den kompletten Namen!
-			eeprom_update_lname(datatxt);
-			// TODO: wird im Betrieb auch benötigt??
-		}
+		strlcpy_P(test, txtp_cmd_onamei, sizeof(test));
+		eeprom_get_oname(test+8);
+		strlcat_P(test, txtp_cmdend, sizeof(test));	// will länge des kompletten "test" buffers+0
+		wlan_puts(test);
 	}
 
-	else if(!strcmp_P(wlan_string, txtp_cmd_hwget))	{ uart0_puts_p(txtp_hwi); }	//  für das UC02 Board mit "<hwi:01>" antworten
+	else if(!strncmp_P(wlan_string, txtp_cmd_nameset, 8))	// "nameset:" set loco name in eeprom
+	{
+		eeprom_update_lname(wlan_string+8);	// TODO: wird lokname im Betrieb auch benötigt??
+	}
+
+	else if(!strcmp_P(wlan_string, txtp_cmd_nameget))	// "nameget"
+	{
+		strlcpy_P(test, txtp_iam, sizeof(test));
+		eeprom_get_lname(test+7);
+		strlcat_P(test, txtp_cmdend, sizeof(test));	// will länge des kompletten "test" buffers+0
+		wlan_puts(test);
+	}
+
+	else if(!strcmp_P(wlan_string, txtp_cmd_hwget))
+	{
+		wlan_puts_p(txtp_hwi); //  für das UC02 Board mit "<hwi:01>" antworten
+		wlan_puts_p(txtp_cmd_ntypi);	// Netzwerk-Typ (dummes WLAN-Modul)
+	}
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_servoget))		// servoget - Servo-Konfiguration wird angefordert
 	{
 		uint8_t i;
 		char strbuffer[10];
-		strlcpy_P(test, txtp_cmd_servoi, 9);	// Rückmeldung per <servoi:mode:count:*port0**pin0*:..>
+		strlcpy_P(test, txtp_cmd_servoi, sizeof(test));	// Rückmeldung per <servoi:mode:count:*port0**pin0*:..>
 		itoa(servo_mode, strbuffer, 10);
-		strlcat(test, strbuffer, UART_MAXSTRLEN+1);	// will länge des kompletten "test" buffers+0
-		strlcat_P(test, txtp_cmdtrenn, UART_MAXSTRLEN+1);
+		strlcat(test, strbuffer, sizeof(test));	// will länge des kompletten "test" buffers+0
+		strlcat_P(test, txtp_cmdtrenn, sizeof(test));
 		itoa(servo_count, test+9, 10);
 
 		for( i = 0; i < servo_count; i++ )
 		{
-			strlcat_P(test, txtp_cmdtrenn, UART_MAXSTRLEN+1);
+			strlcat_P(test, txtp_cmdtrenn, sizeof(test));
 			strbuffer[0] = servoPort[i];
 			strbuffer[1] = servoPin[i] + 48;	// einfache ASCII-Konvertierung "0" ist ASCII-Code 48
-			strbuffer[1] = 0;					//String Terminierung
-			strlcat(test, strbuffer, UART_MAXSTRLEN+1);
+			strbuffer[2] = 0;					//String Terminierung
+			strlcat(test, strbuffer, sizeof(test));
 		}
-		strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1);
-		uart0_puts(test);
-
+		strlcat_P(test, txtp_cmdend, sizeof(test));
+		wlan_puts(test);
 	}
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_servoset))		// servoset  zB: "servoset:0:6:B0:B1:B2:B3:B7:D4"
@@ -213,14 +201,119 @@ void befehl_auswerten(void)
 	}
 
 	
+	// <gpioc:pin:wert> pin: 0-7, wert: 0 oder 1
+	else if(!strncmp_P(wlan_string, txtp_cmd_gpioc, 6))	// "gpioc:" - <gpioc:pin:wert> pin: 0-7, wert: 0 oder 1
+	{
+		uint8_t pinnr,pinval;
+		strncpy(test, wlan_string+6, 1);	//nur 1 Zeichen auswerten (pin)
+		pinnr = (uint8_t)atoi(test);
+
+		memset(test, 0, UART_MAXSTRLEN+1);	// text wieder leeren
+		strncpy(test, wlan_string+8, 1);	//nur 1 Zeichen auswerten (wert) -> ok, weil vorher test gelöscht wurde!!
+		pinval = (uint8_t)atoi(test);
+
+		if (pinval) { PORTC |= (1<<pinnr); }	// Pin auf 1 setzen
+		else { PORTC &= ~(1<<pinnr); }			// Pin auf 0 setzen
+
+	}
+
+	else if(!strncmp_P(wlan_string, txtp_cmd_fpwmset, 8))	// "fpwmset:"  PWM-Frequenz setzen
+	{
+		uint8_t pwmf_new = 0;
+		strncpy(test, wlan_string+8, 1);		// die einstellige Zahl rauskopiern
+		test[1] = (char) 0;	// string mit 0-Byte abschließen
+		pwmf_new = atoi(test);
+
+		if ((pwmf_new < 1) || (pwmf_new > 9)) { pwmf_new = MOTOR_PWMF_STD; } // muss im Berech on 1 bis 9
+
+		if (pwmf_new != motor_pwmf)
+		{
+			motor_pwmf = pwmf_new;
+			eeprom_update_MotorPWMf(motor_pwmf);
+			// speed_soll = 0;
+			// if (speed != 0) { warte_ms(1000); }	// zur Sicherheit warten, bis Lok steht -> 1s Zeit geben
+			// TODO: hier warten usw. geht nicht - checken, wie sich das in Fahrt verhält
+			init_pwm(motor_pwmf);		// neuen PWM-Modus setzen
+		}
+	}
+
+	else if(!strcmp_P(wlan_string, txtp_cmd_fpwmget))	// <fpwmget> PWM-Frequenz abfragen -> Rückmeldung <fpwmi:n>
+	{
+		// txtp_cmd_fpwmi[] PROGMEM = "<fpwmi:";
+		strlcpy_P(test, txtp_cmd_fpwmi, sizeof(test));
+		itoa(motor_pwmf, test+7, 10);
+		strlcat_P(test, txtp_cmdend, sizeof(test));	// will länge des kompletten "test" buffers+0
+		wlan_puts(test);
+	}
+
+	else if(!strcmp_P(wlan_string, txtp_cmd_alive))	// <alive>
+	{
+		// grundsätzlich reicht es, wenn der Befehl als gültig gezählt wird (sonst: siehe else-Zweig: Zähler wird wieder vermindert)
+		//TODO: Auswertungen für Stromsparmodus
+	}
+
+	else if(!strcmp_P(wlan_string, txtp_cmd_aliveget))	// "aliveget" Wert für das alive-Timeout -> Rückmeldung <alivei:*sekunden*>
+	{
+		// const char txtp_cmd_alivei[] PROGMEM = "<alivei:";
+		strlcpy_P(test, txtp_cmd_alivei, sizeof(test));
+		itoa(eeprom_getAliveCheckSecs(), test+8, 10);
+		strlcat_P(test, txtp_cmdend, sizeof(test));	// will länge des kompletten "test" buffers+0
+		wlan_puts(test);
+	}
+
+	else if(!strncmp_P(wlan_string, txtp_cmd_aliveset, 9))	// "aliveset:*sekunden*"  Wert für das alive-Timeout setzen
+	{
+		int zahl = 0;
+		strncpy(test, wlan_string+9, strlen(wlan_string+9)); 	// die beliebig lange Zahl rauskopiern (Achtung: wenn der buffer nicht leer ist, muss länge+1 angegeben werden!)
+		zahl = atoi(test);
+		if (zahl < 0) { zahl = 3; }
+
+		if (zahl != maxalivesecs)	// bei Änderung umstellen und speichern
+		{
+			maxalivesecs = zahl;
+			eeprom_update_AliveCheckSecs(maxalivesecs);
+		}
+	}
+
+
+	else if(!strcmp_P(wlan_string, txtp_cmd_mcfgget))	// <mcfgget> -> motor_cfg config-byte übermitteln
+	{
+		strlcpy_P(test, txtp_cmd_mcfgi, sizeof(test));				// "<mcfgi:"
+		itoa(motor_cfg, test+7, 10);
+		strlcat_P(test, txtp_cmdend, sizeof(test));	// will länge des kompletten "test" buffers+0
+		wlan_puts(test);
+	}
+
+	else if(!strncmp_P(wlan_string, txtp_cmd_mcfgset, 8))	// "mcfgset:" Setzen einer H-Brücken Konfiguration
+	{
+		int zahl = 0;
+		uint8_t motor_cfg_neu;
+
+		strncpy(test, wlan_string+8, strlen(wlan_string+8)); 		// die beliebig lange Zahl rauskopiern
+
+		zahl = atoi(test);
+		motor_cfg_neu = (uint8_t)zahl;
+
+		if ((motor_cfg_neu < 8) || (motor_cfg_neu > 255))
+		{
+			motor_cfg_neu = MOTOR_CONFIG_1HB; // wenn etwas nicht passt -> Standardwert
+			wlan_puts("<log:motor_cfg passt nicht!>");	// TODO: check Befehl für: Fehler rückmelden, wenn die Zahl für motor_cfg nicht passt
+		}
+
+		if (motor_cfg_neu != motor_cfg)	// bei Änderung umstellen und speichern
+		{
+			motor_cfg = motor_cfg_neu;
+			eeprom_update_MotorConfig(motor_cfg);
+			init_motorctrl(); 	// TODO: checken, wie sich das in Fahrt verhält
+		}
+	}
+
+
+
 	// TODO: ADCGPIO (adc_used) set,get,rückmeldung
-	// TODO: GPIO set,get,rückmeldung
-
+	// TODO: konfigurierbare GPIOs set,get,rückmeldung
 	// TODO: switch Befehle zum Schalten freier GPIOs
-
-
-
-
+	// TODO: alive-fuktion ja/nein, alive-interval
 
 
 	else
@@ -229,6 +322,7 @@ void befehl_auswerten(void)
 		// Bearbeite ungültiges Kommando
 		// TODO: was machen? Rückmeldung unbekannter Befehl
 		alivecount--;	// den Zähler korrigieren (wurde bereits im vorhinein erhöhlt) - es werden nur gültige Befehle gezählt!!
+		// weil ungültige Befehle helfen nicht, wenn die Lok amok-läuft
 	}
 
 	/*
@@ -239,5 +333,7 @@ void befehl_auswerten(void)
 		//lcd_printlc(1,1,(unsigned char *)"letzter Befehl:");
 		//lcd_printlc(2,1,(unsigned char *)wlan_string);
 	} */
+
+	// TODO: ev. Fehler rückmelden, wenn Befehl nicht bekannt?
 
 }

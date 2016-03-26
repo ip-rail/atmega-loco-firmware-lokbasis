@@ -21,6 +21,28 @@
 #include "funktionen.h"
 
 
+// Zwischenlösung Auswahl UART für WLAN (0 / 1)
+// WLAN_UART_NR definiert in lokbasis_hwdef.h
+
+void wlan_puts_p(const char *progmem_s )
+{
+	#if defined( WLAN_UART_NR )	// WLAN_UART_NR = 1
+		uart1_puts_p(progmem_s);
+	#else // WLAN_UART_NR = 0
+		uart0_puts_p(progmem_s);
+	#endif	// WLAN_UART_NR
+
+}
+
+void wlan_puts(const char *s )
+{
+	#if defined( WLAN_UART_NR )	// WLAN_UART_NR = 1
+		uart1_puts(s);
+	#else // WLAN_UART_NR = 0
+		uart0_puts(s);
+	#endif	// WLAN_UART_NR
+}
+
 // check_wlan_cmd(): Funktion für zyklischen Check nach WLAN-Befehlen für die Hauptschleife.
 // Übernimmt die vorhandene Daten pro Befehl (also Text zwischen < und >) nach wlan_string
 // Es wird nicht auf einen vollständigen Befehl gewartet.
@@ -42,7 +64,16 @@ void check_wlan_cmd()
 		// UART_NO_DATA is returned when no data is available.
 
 		uarterror = 0;
-		c = uart0_getc();
+		//c = uart0_getc();	//
+
+		#if defined( WLAN_UART_NR )	// WLAN_UART_NR = 1
+			c = uart1_getc();
+		#else // WLAN_UART_NR = 0
+			c = uart0_getc();
+		#endif	// WLAN_UART_NR
+
+
+
 
 		if ( c & UART_NO_DATA )	//no data available from UART
 		{
@@ -86,7 +117,6 @@ void check_wlan_cmd()
 				}
 				else if (d == 62)	// > abschließendes Zeichen wurde empfangen
 				{
-					//PORT_TESTSIGNAL ^= (1<<TESTSIGNAL);	// Signale bei jedem Durchlauf togglen
 					if (cmdstate == WLANCMD_STARTED) { befehl_auswerten(); }
 					cmdstate = WLANCMD_NONE;
 				}

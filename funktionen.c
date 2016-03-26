@@ -18,6 +18,7 @@
 #include "eedata.h"
 #include "main.h"
 #include "servo.h"
+#include "wlan.h"
 #include "uart.h"
 #include "funktionen.h"
 
@@ -64,7 +65,6 @@ void init_uart(uint8_t uartnr, const unsigned int uartsetting)
 
 		setbit(UCSR0B,RXEN0);	// empfangen einschalten
 		setbit(UCSR0B,TXEN0);	// senden einschalten
-		setbit(UCSR0B,RXCIE0);	// RX Interrupt einschalten
 		clearbit(UCSR0B,UCSZ02);// UCSZ02 -> 0 für 8bit
 
 		// Asynchron, 8N1
@@ -75,14 +75,13 @@ void init_uart(uint8_t uartnr, const unsigned int uartsetting)
 		clearbit(UCSR0C,UPM00);		// no parity
 		clearbit(UCSR0C,UPM01);
 		clearbit(UCSR0C,USBS0);		// 1 stopbit
-
+		setbit(UCSR0B,RXCIE0);	// RX Interrupt einschalten
 
 		break;
 
-#if defined( ATMEGA_USART1 )
+//#if defined( ATMEGA_USART1 )
 	case 1:
 
-		/* TODO: nur test
 		UART1_TxHead = 0;
 		UART1_TxTail = 0;
 		UART1_RxHead = 0;
@@ -90,12 +89,28 @@ void init_uart(uint8_t uartnr, const unsigned int uartsetting)
 
 		UBRR1H = (unsigned char) (uartsetting >> 8);	// Baudrate einstellen: H muss vor L geschrieben werden!!
 		UBRR1L = (unsigned char) (uartsetting);
+		/*
 		UCSR1B = (1<<RXEN1) | (1<<TXEN1);	// senden & empfangen einschalten
 		UCSR1C = (1<<UCSZ10) | (1<<UCSZ11);	// asynchron 8N1
 		UCSR1B |= (1<<RXCIE1);	// RX Interrupt einschalten
-		*/
+		 */
+		setbit(UCSR1B,RXEN1);	// empfangen einschalten
+		setbit(UCSR1B,TXEN1);	// senden einschalten
+		clearbit(UCSR1B,UCSZ12);// UCSZ12 -> 0 für 8bit
+
+		// Asynchron, 8N1
+		clearbit(UCSR1C,UMSEL11);	// asynchrone Übertragung
+		clearbit(UCSR1C,UMSEL10);	// asynchrone Übertragung
+		setbit(UCSR1C,UCSZ10);		// 8bit
+		setbit(UCSR1C,UCSZ11);
+		clearbit(UCSR1C,UPM10);		// no parity
+		clearbit(UCSR1C,UPM11);
+		clearbit(UCSR1C,USBS1);		// 1 stopbit
+		setbit(UCSR1B,RXCIE1);	// RX Interrupt einschalten
+
+
 		break;
-#endif // ATMEGA_USART1
+//#endif // ATMEGA_USART1
 
 	default:
 		break;
@@ -107,35 +122,45 @@ void init_uart(uint8_t uartnr, const unsigned int uartsetting)
 
 void init_motorctrl(void)
 {
+	motor_cfg = eeprom_getMotorConfig();
+
 
 #if defined( HW_UC02 )	//WLANcroc H-Brücke
 
 	#if defined( PHB01_MOTOR1 )
 		DDR_MOTOR |= (1<<MOTOR1_DIR) | (1<<MOTOR1_RESET);	// als Ausgänge setzen - nur 1 H-Brücke
-		DDR_MOTOR &= ~((1<<MOTOR1_FF1) | (1<<MOTOR1_FF2));	// Fehlerpins als Eingänge setzen
+
+		if (motor_cfg & MOTOR_CFG_CHECK_ERR_HB1)
+		{
+			DDR_MOTOR &= ~((1<<MOTOR1_FF1) | (1<<MOTOR1_FF2));	// Fehlerpins als Eingänge setzen
+		}
 
 		//PORT_MOTOR |= (1<<MOTOR1_DIR);	// Richtung auf 1 setzen // je nach Motorcontroller
 		PORT_MOTOR &= ~(1<<MOTOR1_DIR);   	// Motor-Richtung auf 0 // bei diesem Controller: vorwärts
 		PORT_MOTOR |= (1<<MOTOR1_RESET);	// Reset auf HI
 
-		MOTOR1_OCR = 0;
-
 	#endif
 
 	#if defined( PHB01_MOTOR2 )
-		DDR_MOTOR |= (1<<MOTOR2_DIR) | (1<<MOTOR2_RESET);	// als Ausgänge setzen
-		DDR_MOTOR &= ~((1<<MOTOR2_FF1)  | (1<<MOTOR2_FF2));	// Fehlerpins als Eingänge setzen
+		if (motor_cfg & MOTOR_CFG_USE_HBRIDGE2)
+		{
+			DDR_MOTOR |= (1<<MOTOR2_DIR) | (1<<MOTOR2_RESET);	// als Ausgänge setzen
 
-		//PORT_MOTOR |= (1<<MOTOR2_DIR);	// Richtung auf 1 setzen // je nach Motorcontroller
-		PORT_MOTOR &= ~(1<<MOTOR2_DIR);   	// Motor-Richtung auf 0 // bei diesem Controller: vorwärts
-		PORT_MOTOR |= (1<<MOTOR2_RESET);	// Reset auf HI
+			if (motor_cfg & MOTOR_CFG_CHECK_ERR_HB2)
+			{
+				DDR_MOTOR &= ~((1<<MOTOR2_FF1)  | (1<<MOTOR2_FF2));	// Fehlerpins als Eingänge setzen
+			}
 
-		MOTOR2_OCR = 0;
+			//PORT_MOTOR |= (1<<MOTOR2_DIR);	// Richtung auf 1 setzen // je nach Motorcontroller
+			PORT_MOTOR &= ~(1<<MOTOR2_DIR);   	// Motor-Richtung auf 0 // bei diesem Controller: vorwärts
+			PORT_MOTOR |= (1<<MOTOR2_RESET);	// Reset auf HI
+		}
 	#endif
 
-
 		// Timer 1 für Motor-PWM initialisieren --------------------------------------
-		init_pwm(8);	// Mode 8: 15656Hz 9bit prescaler 1  - Timer 1 für Motor-PWM initialisieren
+		motor_pwmf = eeprom_getMotorPWMf();
+		if ((motor_pwmf < 1) || (motor_pwmf > 9)) { motor_pwmf = MOTOR_PWMF_STD; } // muss im Berech on 1 bis 9
+		init_pwm(motor_pwmf);	// Standardwert: Mode 8: 15656Hz 9bit prescaler 1  - Timer 1 für Motor-PWM initialisieren
 
 #endif
 }
@@ -148,7 +173,7 @@ void init_pwm(char freq_pwm)	// Timer 1 für Motor-PWM initialisieren
 	speedstep_korrektur = 0;	// gibt an, ob speed *2 oder *4 genommen werden muss (8/9bit), globale varaible für speed-stellung
 	//clearbit(TIMSK1,OCIE1A);	// Compare Match Interrupt abdrehen (wird für Motor-Messung verwendet) - war für motor-mess-test
 
-	if ((freq_pwm < 1) | (freq_pwm > 9)) { freq_pwm = 1; }
+	if ((freq_pwm < 1) | (freq_pwm > 9)) { freq_pwm = 5; }
 
 	/*
 	Frequenztabelle (Phase correct PWM):
@@ -166,17 +191,18 @@ void init_pwm(char freq_pwm)	// Timer 1 für Motor-PWM initialisieren
 	*/
 
 
-	// DDR_MOTOR_PWM |= (1<<MOTOR1_PWM) | (1<<MOTOR2_PWM);	// als Ausgänge setzen
-	DDR_MOTOR_PWM |= (1<<MOTOR1_PWM);	// als Ausgänge setzen - nur 1 H-Brücke
-
 	#if defined( PHB01_MOTOR1 )
 		DDR_MOTOR_PWM |= (1<<MOTOR1_PWM);	// als Ausgang setzen - 1. H-Brücke
 		MOTOR1_OCR = 0;
 	#endif
 
 	#if defined( PHB01_MOTOR2 )
-		DDR_MOTOR_PWM |= (1<<MOTOR2_PWM);	// als Ausgang setzen - 2. H-Brücke
-		MOTOR2_OCR = 0;
+		if (motor_cfg & MOTOR_CFG_USE_HBRIDGE2)
+		{
+			DDR_MOTOR_PWM |= (1<<MOTOR2_PWM);	// als Ausgang setzen - 2. H-Brücke
+			MOTOR2_OCR = 0;
+		}
+
 	#endif
 
 	//clearbit(PRR0,PRTIM1);	// Power Reduction für Timer 1 deaktivieren
@@ -267,12 +293,13 @@ void init_pwm(char freq_pwm)	// Timer 1 für Motor-PWM initialisieren
 			speedstep_korrektur = 2;
 		break;
 
-		default:	// 122Hz 8bit:256, 10bit:64*
+		default:	// 1957Hz 9bit:8
 			setbit(TCCR1A,WGM11);
-			setbit(TCCR1A,WGM10);
-			clearbit(TCCR1B,CS12);		// prescaler = 64
-			setbit(TCCR1B,CS11);		// prescaler = 64
-			setbit(TCCR1B,CS10);		// prescaler = 64
+			clearbit(TCCR1A,WGM10);
+			clearbit(TCCR1B,CS12);		// prescaler = 8
+			setbit(TCCR1B,CS11);		// prescaler = 8
+			clearbit(TCCR1B,CS10);		// prescaler = 8
+			speedstep_korrektur = 1;
 		break;
 	}
 	// speed muss für 8bit/9bit pwm um 1 bzw. 2 bit geshiftet werden, damit der speedwert passt (also halbiert bzw. geviertelt) -> in set_speed()
@@ -286,13 +313,22 @@ void init_pwm(char freq_pwm)	// Timer 1 für Motor-PWM initialisieren
 void motor_sleep(void)
 {
 	PORT_MOTOR &= ~(1<<MOTOR1_RESET);	// Reset auf LO
+
 	//TODO: Motor2 fehlt noch
+	#if defined( PHB01_MOTOR2 )
+		if (motor_cfg & MOTOR_CFG_USE_HBRIDGE2) { PORT_MOTOR &= ~(1<<MOTOR2_RESET); }
+	#endif
 }
 
 // Motorcontroller PHB01 aus Schlafmodus aufwecken (dauert ca. 3ms)
 void motor_wakeup(void)
 {
 	PORT_MOTOR |= (1<<MOTOR1_RESET);	// Reset auf HI
+
+	#if defined( PHB01_MOTOR2 )
+		if (motor_cfg & MOTOR_CFG_USE_HBRIDGE2) { PORT_MOTOR |= (1<<MOTOR2_RESET); }
+	#endif
+
 	//warte_ms(4);	// TODO: Wartezeit sinnvoll?
 }
 
@@ -300,8 +336,18 @@ void motor_wakeup(void)
 void motor_reset(void)
 {
 	PORT_MOTOR &= ~(1<<MOTOR1_RESET);	// Reset auf LO
+
+	#if defined( PHB01_MOTOR2 )
+		if (motor_cfg & MOTOR_CFG_USE_HBRIDGE2) { PORT_MOTOR &= ~(1<<MOTOR2_RESET); }
+	#endif
+
 	_delay_us(1);	// LO für 1µs
+
 	PORT_MOTOR |= (1<<MOTOR1_RESET);	// Reset auf HI
+
+	#if defined( PHB01_MOTOR2 )
+		if (motor_cfg & MOTOR_CFG_USE_HBRIDGE2) { PORT_MOTOR |= (1<<MOTOR2_RESET); }
+	#endif
 }
 
 
@@ -313,17 +359,23 @@ void checkMotorStatus()
 	motorerror = 0;
 	char test[UART_MAXSTRLEN+1];
 
-	if (PIN_MOTOR & (1<<MOTOR1_FF1)) { motorerror |= 1; } 		else { motorerror &= ~1; }	// bit 0
-	if (PIN_MOTOR & (1<<MOTOR1_FF2)) { motorerror |= (1<<1); } 	else { motorerror &= ~2; }	// bit 1
+	if (motor_cfg & MOTOR_CFG_CHECK_ERR_HB1)
+	{
+		if (PIN_MOTOR & (1<<MOTOR1_FF1)) { motorerror |= 1; } 	// bit 0
+		if (PIN_MOTOR & (1<<MOTOR1_FF2)) { motorerror |= 2; } 	// bit 1
+	}
+
 
 	#if defined( PHB01_MOTOR2 )
-
-			if (PIN_MOTOR & (1<<MOTOR2_FF1)) { motorerror |= (1<<2); } 	else { motorerror &= ~4; }	// bit 2
-			if (PIN_MOTOR & (1<<MOTOR2_FF2)) { motorerror |= (1<<3); } 	else { motorerror &= ~8; }	// bit 3
+		if (motor_cfg & MOTOR_CFG_CHECK_ERR_HB2)
+		{
+			if (PIN_MOTOR & (1<<MOTOR2_FF1)) { motorerror |= 4; } 	// bit 2
+			if (PIN_MOTOR & (1<<MOTOR2_FF2)) { motorerror |= 8; } 	// bit 3
+		}
 	#endif	// PHB01_MOTOR2
 
 
-	if (motorerror > 0)	// bei Error: Speed auf 0 setzen -> stop (geschieht nicht sofort!!)
+	if (motorerror > 0)	// bei Error: Speed auf 0 setzen -> stop (geschieht nicht sofort!!) passiert im speed.c
 	{
 		if (error_alt == 0)	// beim ersten Auftreten an Controller melden
 		{
@@ -331,7 +383,7 @@ void checkMotorStatus()
 			strlcpy_P(test, txtp_errmotor, 14);
 			ltoa(motorerror, test+13, 10);
 			strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1); // will Länge des kompletten "test" buffers+0
-			uart0_puts(test);
+			wlan_puts(test);
 		}
 	}
 } // end checkMotorStatus()

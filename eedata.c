@@ -10,6 +10,7 @@
 #include <avr/eeprom.h>
 #include <avr/pgmspace.h>
 #include <string.h>		//memset
+#include "lokbasis_hwdef.h"		// Hardware-Definitionen für die verschiedenen Boards
 #include "main.h"
 #include "eedata.h"
 #include "servo.h"
@@ -21,6 +22,9 @@ typedef struct {
   uint16_t eedata_version;	// fortlaufende Nummer bei Änderung
   //--- HW-Config
   uint8_t  adc_used;	//ADC0-7 bitmask: 0=unused, 1=used
+  uint8_t  motor_pwmf;
+  uint8_t  motor_config;	// Konfig H-Brücken Stdwert = 8 für 1 H-Brücke (25 für 2 H-Brücken)
+  uint8_t  alivechecksecs; 	Einstellung für den Alive-check [Sekunden, die die Lok ohne neue Befehle weiterfahren darf] 0 -> keine Prüfung
   uint8_t  servo_mode;	// 0: für jedes Servosignal wird ein GPIO verwendet (vordefinieren welche!). 1: alle Signale nur an 1 GPIO ausgeben (Port,Pin mit Index 0), an dem ein Kreiszähler-IC hängt
   uint8_t  servo_count;	// wieviele Servosignale ausgeben (max. 6-8?)
   uint8_t servoPort[SERVOCOUNTMAX];	//Port-Adresse und Pin-Nummer der GPIOs, die für Servos verwendet werden (verwendet werden Index 0 bis SERVOCOUNTMAX-1)
@@ -48,14 +52,23 @@ void eeprom_checkversion()
 	else
 	{
 		uint16_t ee_saveddata_ver = eeprom_read_word((const uint16_t *)EEDATA_ADR_VERSION);
-		if (ee_saveddata_ver < EEDATA_VERSION) // Update notwendig
-		{
-			// switch	// TODO: Data structure updates
-		}
-
+		if (ee_saveddata_ver < EEDATA_VERSION) { eeprom_updatesys(ee_saveddata_ver); }	// Update notwendig
 	}
-
 }
+
+void eeprom_updatesys(uint16_t oldversion)
+{
+	// TODO: Data structure updates
+	switch (oldversion)
+		{
+			case 1:	// Update von Version 1 auf 2
+			case 2:	// Update von Version 2 auf 3
+			case 3: // Update von Version 3 auf 4
+				init_eeprom();	// ein letztes Mal drüberklatschen (damit wird auch die version upgedatet)
+			break;
+		}
+}
+
 
 
 //EEData mit Defaultwerten befüllen
@@ -63,19 +76,23 @@ void init_eeprom()
 {
 	char datatxt[EEDATA_MAXSTRLEN];
 
-	//EEData version 0
+	//EEData version 3
 	eeprom_update_dword((uint32_t *)EEDATA_ADR_START, (uint32_t)EE_MAGIC_CODE);
-	eeprom_update_word((uint16_t *)EEDATA_ADR_VERSION, 1);	// Data version 1
+	//eeprom_update_word((uint16_t *)EEDATA_ADR_VERSION, (uint16_t)EEDATA_VERSION);	// TODO: error: eeData version wird so nicht geschrieben!!!!
+	eeprom_update_word((uint16_t *)4, 4);	// eeData version = 4 - so wird es geschrieben!!!!!!!!
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_ADCUSED, 1);	// only use ADC0
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_MOTOR_PWMF, (uint8_t)MOTOR_PWMF_STD);
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_MOTOR_CONFIG, (uint8_t)MOTOR_CONFIG_1HB);
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_ALIVE_SECS, (uint8_t)ALIVE_INTERVAL);
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_SERVO_MODE, 0);	// a GPIO for each Servo
 	//eeprom_update_byte((uint8_t *)EEDATA_ADR_SERVO_COUNT, 0);	// no Servos used -> servo port,pin data doesn't matter!
-	eeprom_update_byte((uint8_t *)EEDATA_ADR_SERVO_COUNT, 2);// TODO: Testdaten
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_SERVO_COUNT, 2);// TODO: nur Testdaten, wieder entfernen!
 
 	servoPort[0] = 'B';	// TODO: nur test
-	servoPin[0]  = 1<<PB0;	// TODO: nur test
+	servoPin[0]  = PB0;	// TODO: nur test
 	servoPort[1] = 'B';	// TODO: nur test
-	servoPin[1]  = 1<<PB1;	// TODO: nur test
-	eeprom_update_ServoGPIO(servoPort, servoPin);	// TODO: nur test
+	servoPin[1]  = PB1;	// TODO: nur test
+	eeprom_update_ServoGPIO(servoPort, servoPin);	// TODO: nur test, wieder entfernen!
 
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_B, 0);	// Defaultwert 0: keine GPIOs verwenden
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_D, 0);
@@ -93,6 +110,7 @@ void init_eeprom()
 }
 
 
+
 void eeprom_update_oname(const char *data)
 {
 	uint16_t datasize = strlen(data);
@@ -101,6 +119,11 @@ void eeprom_update_oname(const char *data)
 	{
 		eeprom_update_block((const void *)data, (void *)EEDATA_ADR_OWNERNAME, datasize+1);	// datasize+1 -> abschließendes 0-Byte mitkopieren!! (ob danach noch Mist steht, falls der String nicht die volle reservierte Länge ausf�llt, ist egal
 	}
+}
+
+void eeprom_get_oname(char *name)
+{
+	eeprom_read_block((void*)name, (void*)EEDATA_ADR_OWNERNAME, EEDATA_MAXSTRLEN);
 }
 
 void eeprom_update_lname(const char *data)
@@ -113,6 +136,10 @@ void eeprom_update_lname(const char *data)
 	}
 }
 
+void eeprom_get_lname(char *name)
+{
+	eeprom_read_block((void*)name, (void*)EEDATA_ADR_LOKNAME, EEDATA_MAXSTRLEN);
+}
 
 void eeprom_getServoMode()
 {
@@ -153,14 +180,47 @@ uint8_t eeprom_getADCGPIO()
 	return eeprom_read_byte((const uint8_t *)EEDATA_ADR_ADCUSED);
 }
 
-void eeprom__update_ADCGPIO(const uint8_t adcmask)
+void eeprom_update_ADCGPIO(const uint8_t adcmask)
 {
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_ADCUSED, adcmask);
 }
 
+uint8_t eeprom_getMotorPWMf()
+{
+	return eeprom_read_byte((const uint8_t *)EEDATA_ADR_MOTOR_PWMF);
+}
+
+void eeprom_update_MotorPWMf(const uint8_t pwmf)
+{
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_MOTOR_PWMF, pwmf);
+}
 
 
-uint8_t eeprom_getGPIO(char port)	// ACHTUNG: Großbuchstaben!!
+uint8_t eeprom_getMotorConfig()
+{
+	return eeprom_read_byte((const uint8_t *)EEDATA_ADR_MOTOR_CONFIG);
+}
+
+void eeprom_update_MotorConfig(const uint8_t mconfig)
+{
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_MOTOR_CONFIG, mconfig);
+}
+
+
+
+
+uint8_t eeprom_getAliveCheckSecs()
+{
+	return eeprom_read_byte((const uint8_t *)EEDATA_ADR_ALIVE_SECS);
+}
+
+void eeprom_update_AliveCheckSecs(const uint8_t secs)
+{
+	eeprom_update_byte((uint8_t *)EEDATA_ADR_ALIVE_SECS, secs);
+}
+
+
+uint8_t eeprom_getGPIO(char port)	// TODO: ACHTUNG: muss Großbuchstabe sein!! -> bei Befehlsauswertung beachten, muwandeln!!
 {
 	uint8_t value = 0;
 

@@ -1,5 +1,6 @@
-#ifndef UART_H
+﻿#ifndef UART_H
 #define UART_H
+
 
 
 /************************************************************************
@@ -114,10 +115,9 @@ Date        Description
  */
 
 
-
 /* Enable USART 1, 2, 3 as required */
 #define USART0_ENABLED
-//#define USART1_ENABLED
+#define USART1_ENABLED
 //#define USART2_ENABLED 
 //#define USART3_ENABLED
 
