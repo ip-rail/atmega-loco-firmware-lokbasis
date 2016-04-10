@@ -2,8 +2,8 @@
  *
  * main.c
  *
- *	Version: 0.04
- *  Created on: 14.12.2014 - 20.06.2015
+ *	Version: 6
+ *  Created on: 14.12.2014 - 02.04.2016
  *  Author: Michael Brunnbauer
  */
 
@@ -91,8 +91,8 @@ uint8_t  gpios_e;		//
 uint8_t  gpios_g;		//
 
 // LokData im Flash
-const char dev_swname[] PROGMEM = "lokbasis";     	// -> keine Änderung durch User -> flash
-const char dev_swversion[] PROGMEM = "5";   		// -> keine Änderung durch User -> flash
+const char dev_swname[] PROGMEM = "lokbasis";     	// Softwarename -> keine Änderung durch User -> flash
+const char dev_swversion[] PROGMEM = "6";   		// Software-Version -> keine Änderung durch User -> flash
 
 //Strings im Flash für CMD-Rückmeldungen über WLAN
 const char txtp_cmdend[] PROGMEM = ">";						// Befehlsende-Zeichen

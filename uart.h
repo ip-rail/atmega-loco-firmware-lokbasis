@@ -127,7 +127,7 @@ Date        Description
 	#define UART_RX0_BUFFER_SIZE 256 /**< Size of the circular receive buffer, must be power of 2 */
 #endif
 #ifndef UART_RX1_BUFFER_SIZE
-	#define UART_RX1_BUFFER_SIZE 128 /**< Size of the circular receive buffer, must be power of 2 */
+	#define UART_RX1_BUFFER_SIZE 256 /**< Size of the circular receive buffer, must be power of 2 */
 #endif
 #ifndef UART_RX2_BUFFER_SIZE
 	#define UART_RX2_BUFFER_SIZE 128 /**< Size of the circular receive buffer, must be power of 2 */

@@ -55,7 +55,7 @@ ISR (TIMER0_OVF_vect)      // wird alle 1,024ms ms aufgerufen, zuständig für's
 	msCount++;
 	if(msCount >= servo_sleep)	// wenn die Wartezeit erreicht ist
 	{
-		// das nächste 20ms Intervall ist angebrochen
+		// das nächste 20ms Intervall ist angebrochen -> also den ersten Servo-Pin auf High setzen
 		ServoId = 0;
 		//SERVO_PORT |= ServoOutput[ServoId];	// Puls für ersten Servo starten	// alt
 		// http://openbook.rheinwerk-verlag.de/c_von_a_bis_z/012_c_zeiger_007.htm#mjb99637a42fd3decdfe07fe3416407be8
@@ -119,7 +119,7 @@ ISR (TIMER4_COMPA_vect)	// beendet den jweils aktuellen Servo-Puls und kümmert 
 			break;
 	}
 
-	if( ++sid >= servo_count ) // alle Servos haben ihren aktuellen Impuls bekommen?
+	if( ++sid >= servo_count ) // ServoID erhöhen, alle Servos haben ihren aktuellen Impuls bekommen?
 	{
 		if (servo_run)	// nur machen, wenn weiter Servosignale generiert werden sollen
 		{
@@ -134,8 +134,6 @@ ISR (TIMER4_COMPA_vect)	// beendet den jweils aktuellen Servo-Puls und kümmert 
 		// 000: timer stopped
 		TCCR4B &= ~((1 << CS42) | (1 << CS41) | (1 << CS40)); // timer4 stoppen
 		TCNT4 = 0;	//timer4 auf 0 setzen
-
-
 
 	}
 	else
@@ -175,7 +173,7 @@ void initServo()
 	// folgende Werte sind nicht mehr konstant und müssen daher berechnet werden:
 	//#define SERVOCOUNT      2 <- aus eeprom-daten lesen
 	//#define SERVO_DDR      DDRB	- wird durch servoPort[] ersetzt
-	//#define SERVO_PORT     PORTB  - wird durch servoPin[] ersetzt
+	//#define SERVO_PORT     PORTB  - wird durch servoPort[] ersetzt
 
 	servo_run = 1;	//	Variable zum Stoppen der Servo-Signalgenereierung
 	// gestartet wird mit dem Starten von timer4, ist in initServo() aber auskommentiert
@@ -275,7 +273,7 @@ void initServo()
 	TCCR4B |= (1<<WGM42);		// CTC mode
 
 
-	// alles ist bereit, Signalgenerierung startet aber erst mit dem Starten von timer 4!
+	// alles ist bereit, Signalgenerierung startet aber erst mit dem Starten von timer4!
 	// Stoppen der Signalgenerierung wäre mit: servo_run=0;
 	// TCCR4B |= (1 << CS40);	//start timer4, prescaler=1	// nicht hier starten!
 }
@@ -288,4 +286,5 @@ void Servo_stop()	// Stoppen der Signalgenerierung für die Servos
 void Servo_start()	// Signalgenerierung für Servos starten (initServo() muss natürlich schon gelaufen sein)
 {
 	TCCR4B |= (1 << CS40);	//start timer4, prescaler=1
+	// TODO: passt nicht ganz: Impuls für ersten Servo wird von der Timer0-ISR gestartet
 }
