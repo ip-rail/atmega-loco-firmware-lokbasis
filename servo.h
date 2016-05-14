@@ -31,7 +31,7 @@ extern uint8_t servoPort[SERVOCOUNTMAX];	//Port (Buchstabe Großschrift) und Pin
 extern uint8_t servoPin[SERVOCOUNTMAX];	//Port und Pin gehören je Index zusammen
 extern uint8_t servo_sleep;				// grober Wert, wieviel von den 20ms Servo-Intervall gewarret werden muss
 extern volatile unsigned int servoValue[SERVOCOUNTMAX];
-
+extern volatile uint8_t servo_error;	// error bei servo IO
 
 extern void initServo();
 extern void Servo_stop();

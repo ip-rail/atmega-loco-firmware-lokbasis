@@ -8,7 +8,6 @@
 #include "commands.h"
 
 //#include <avr/eeprom.h>
-//#include <avr/interrupt.h>
 #include <avr/interrupt.h>
 //#include <avr/io.h>
 #include <avr/iomxx0_1.h>
@@ -17,10 +16,9 @@
 //#include <avr/wdt.h>	//für Watchdog Reset
 #include <avr/wdt.h>
 #include <stdint.h>
-//#include <stdlib.h>		// für "itoa"
-#include <stdlib.h>
-#include <string.h>
-//#include <string.h>		// für "strcmp"
+#include <stdio.h>		// für "sprintf"!!! TODO: nur für Tests: wieder weg
+#include <stdlib.h>		// für "itoa"
+#include <string.h>			// für "strcmp"
 //#include <util/delay.h>	// für delay_ms()
 
 #include "eedata.h"
@@ -172,13 +170,15 @@ void befehl_auswerten(void)
 		wlan_puts(test);
 	}
 
-	else if(!strcmp_P(wlan_string, txtp_cmd_servoset))		// servoset  zB: "servoset:0:6:B0:B1:B2:B3:B7:D4"
+	else if(!strncmp_P(wlan_string, txtp_cmd_servoset, 9))	// "servoset:"  zB: "servoset:0:6:B0:B1:B2:B3:B7:D4"
 	{
 		uint8_t mode, count, i;
 		mode = wlan_string[9] - 48;	// mögliche Werte: 0 oder 1
 		count = wlan_string[11];	// mögliche Werte: 0 bis SERVOCOUNTMAX
 
 		if ((mode > 1) || (count > SERVOCOUNTMAX)) { return; }// Daten stimmen nicht
+
+		if (mode != 0) { mode = 0;}	//TODO: derzeit ist nur servo_mode == 0 erlaub!
 
 		servo_mode = mode;
 		servo_count = count;
@@ -199,6 +199,31 @@ void befehl_auswerten(void)
 
 		//TODO: neu initialisieren? (zumindest teilweise weil sich womöglich GPIOs geändert haben? -> checken)
 	}
+
+	else if(!strncmp_P(wlan_string, txtp_cmd_servomove, 10))	// "servomove:" Servo position setzen <servomove:servo:wert>
+	{
+		uint8_t servonr;
+		unsigned int servo_pos;
+
+		wlan_string[11] = 0;	// Zahl als "String" isolieren
+		servonr = atoi(wlan_string+10);	// TODO: Achtung: hier ist Servo-Nummer immer nur 1 Zeichen -> falls sich das mal ändert, muss die auswertung felxibel gemacht werden!!
+		if ((servonr < 1) || (servonr > SERVOCOUNTMAX))
+		{
+			wlan_puts("<log:Ungültige Servonr!");
+			servonr = 1;
+		} // TODO: Fehler rückmelden
+
+		servo_pos = atoi(wlan_string+12);
+		if (servo_pos > 16000) { servo_pos = 16000; }	// gültige Werte: 0 bis 16000
+
+		cli();
+		servoValue[servonr-1] = servo_pos;	// index = 0 bis SERVOCOUNTMAX-1
+		sei();
+
+		sprintf(test, "<log:Wert %i für Servoindex %i gesetzt.>", servoValue[servonr-1], servonr-1);	//TODO: test
+		wlan_puts(test);
+	}
+
 
 	
 	// <gpioc:pin:wert> pin: 0-7, wert: 0 oder 1

@@ -21,6 +21,7 @@
 #include <avr/io.h>
 #include <string.h>		// für "strcmp"
 #include <stdlib.h>		// für "itoa"
+#include <stdio.h>		// für "sprintf"!!! TODO: nur für Tests: wieder weg
 #include <util/delay.h>	// für delay_ms()
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
@@ -143,6 +144,7 @@ const char txtp_cmd_nameget[] PROGMEM = "nameget";
 const char txtp_cmd_onameget[] PROGMEM = "onameget";
 const char txtp_cmd_aliveget[] PROGMEM = "aliveget";
 const char txtp_cmd_aliveset[] PROGMEM = "aliveset:";
+const char txtp_cmd_servomove[] PROGMEM = "servomove:";
 
 int main(void)
 {
@@ -172,6 +174,8 @@ int main(void)
 	#endif	
 	
 	setbit(DDRD,PD7);	// Pin als Ausgang definieren - für Testsignal
+	setbit(DDRD,PD6);	// Pin als Ausgang definieren - für Testsignal
+	//setbit(PORTD,PD6);	// Test servo
 
 	init_adc();
 	initServo();
@@ -180,7 +184,7 @@ int main(void)
 
 	sei();	// Interrupts aufdrehen
 
-	Servo_start();	// Signalgenerierung starten
+	Servo_start();	// Signalgenerierung starten // TODO: für Test deaktiviert
 
 	// ========================  Hardware Initialisierung abgeschlossen  ================================================
 
@@ -188,6 +192,28 @@ int main(void)
 	wlan_puts("<MC start>");
 
 	//setbit(PORTD,PD6);	// TEST: auf HI
+
+	// Test Log-ausgabe servocount
+	/*
+	memset(test, 0, UART_MAXSTRLEN+1);	// text leeren
+	strlcpy_P(test, txtp_cmd_log, sizeof(test));
+	strlcat_P(test, "servocount=", sizeof(test));
+	itoa(servo_count, test+16, 10);
+	strlcat_P(test, txtp_cmdend, sizeof(test));	// will länge des kompletten "test" buffers+0
+	wlan_puts(test);
+	*/
+
+	sprintf(test, "<log:servocount=%i>", servo_count);	//TODO: test
+	wlan_puts(test);
+	sprintf(test, "<log:servopin0=P%c%i>", servoPort[0], servoPin[0]);	//TODO: test
+	wlan_puts(test);
+	sprintf(test, "<log:servopin1=P%c%i>", servoPort[1], servoPin[1]);	//TODO: test
+	wlan_puts(test);
+	sprintf(test, "<log:servoval0=%i>", servoValue[0]);	//TODO: test
+	wlan_puts(test);
+	sprintf(test, "<log:servoval1=%i>", servoValue[1]);	//TODO: test
+	wlan_puts(test);
+
 
 //-------------------------------------------------------------------------------------------------------------
 //------                       H A U P T S C H L E I F E                                               --------
@@ -238,10 +264,10 @@ int main(void)
 			wlan_puts(test);
 
 			//TODO Test Servo
-			if (servoValue[0] == CENTER) { servoValue[0] = 0; }
-			else { servoValue[0] = CENTER; }
-			if (servoValue[1] == CENTER) { servoValue[1] = 0; }
-			else { servoValue[1] = CENTER; }
+			//if (servoValue[0] == CENTER) { servoValue[0] = 0; }
+			//else { servoValue[0] = CENTER; }
+			//if (servoValue[1] == CENTER) { servoValue[1] = 0; }
+			//else { servoValue[1] = CENTER; }
 
 			last_loop_count = loop_count;	// ermittelten loopcount sichern
 			loop_count = 0;	// loopcount sekündlich zurücksetzen -> ergibt loops/s
@@ -268,6 +294,12 @@ int main(void)
 		#else // WLAN_UART_NR = 0
 			if (uart0_available() > 0) { check_wlan_cmd(); }
 		#endif	// WLAN_UART_NR
+
+		if (servo_error)	// TODO: Test
+		{
+			wlan_puts("Servo IO error!");
+			servo_error = 0;
+		}
 
 	}	// Ende Hauptschleife (endlos)
 

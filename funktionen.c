@@ -427,6 +427,7 @@ void remcrlf(char *crlftext)
 void init_gpios()
 {
 	// TODO: definierte ADC müssen auch noch ausgeschlossen werden (vorerst alle ADC ausgeschlossen)!!
+
 	uint8_t portB_servo = 0;	// Masken für die einzelenen Ports
 	uint8_t portD_servo = 0;
 	uint8_t portE_servo = 0;

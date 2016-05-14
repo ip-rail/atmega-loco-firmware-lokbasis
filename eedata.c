@@ -92,6 +92,7 @@ void init_eeprom()
 	servoPin[0]  = PB0;	// TODO: nur test
 	servoPort[1] = 'B';	// TODO: nur test
 	servoPin[1]  = PB1;	// TODO: nur test
+
 	eeprom_update_ServoGPIO(servoPort, servoPin);	// TODO: nur test, wieder entfernen!
 
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_B, 0);	// Defaultwert 0: keine GPIOs verwenden
@@ -165,6 +166,8 @@ void eeprom_getServoGPIO()
 {
 	eeprom_read_block((void *)&servoPort, (const void *)EEDATA_ADR_SERVO_PORT, SERVOCOUNTMAX);
 	eeprom_read_block((void *)&servoPin, (const void *)EEDATA_ADR_SERVO_PIN, SERVOCOUNTMAX);
+
+	// Info: servoOutput[] wird im initServo() nach dem Aufruf von eeprom_getServoGPIO() generiert
 }
 
 

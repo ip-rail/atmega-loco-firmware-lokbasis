@@ -108,5 +108,6 @@ extern const char txtp_cmd_nameget[];
 extern const char txtp_cmd_onameget[];
 extern const char txtp_cmd_aliveget[];
 extern const char txtp_cmd_aliveset[];
+extern const char txtp_cmd_servomove[];
 
 #endif /* MAIN_H_ */
