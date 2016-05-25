@@ -77,6 +77,7 @@ extern const char txtp_cmd_log[];
 extern const char txtp_cmd_ntypi[];
 extern const char txtp_cmd_onamei[];
 extern const char txtp_cmd_alivei[];
+extern const char txtp_cmd_gpioi[];
 
 //Befehle im Flash
 extern const char txtp_cmd_stop[];
@@ -109,5 +110,14 @@ extern const char txtp_cmd_onameget[];
 extern const char txtp_cmd_aliveget[];
 extern const char txtp_cmd_aliveset[];
 extern const char txtp_cmd_servomove[];
+extern const char txtp_cmd_gpioget[];
+extern const char txtp_cmd_gpioset[];
+extern const char txtp_cmd_gpio[];
+extern const char txtp_cmd_gpioclear[];
+
+extern const char txtp_err_gpioset_pin[];
+extern const char txtp_err_gpioset_port[];
+extern const char txtp_i_servo[];
+
 
 #endif /* MAIN_H_ */

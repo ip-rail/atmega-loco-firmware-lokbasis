@@ -113,6 +113,7 @@ const char txtp_cmd_log[] PROGMEM = "<log:";				// Rückmeldung Log-Text
 const char txtp_cmd_ntypi[] PROGMEM = "<ntypi:1>";			// Rückmeldung Netzwerk-Typ
 const char txtp_cmd_onamei[] PROGMEM = "<onamei:";			// Rückmeldung Besitzer-Name
 const char txtp_cmd_alivei[] PROGMEM = "<alivei:";			// Rückmeldung Wert für das alive-Timeout
+const char txtp_cmd_gpioi[] PROGMEM = "<gpioi:%i:%i:%i:%i>";	// Rückmeldung GPIO-Konfiguration (GPIO-Info command)
 
 // Befehle - Strings für auswertung, daher ohne spitze Klammern
 const char txtp_cmd_stop[] PROGMEM = "stop";
@@ -134,7 +135,7 @@ const char txtp_cmddata_end[] PROGMEM = "end:";
 const char txtp_cmd_hwget[] PROGMEM = "hwget";
 const char txtp_cmd_servoget[] PROGMEM = "servoget";
 const char txtp_cmd_servoset[] PROGMEM = "servoset:";
-const char txtp_cmd_gpioc[] PROGMEM = "gpioc:";
+const char txtp_cmd_gpioc[] PROGMEM = "gpioc:";	// TODO: kommt weg
 const char txtp_cmd_fpwmset[] PROGMEM = "fpwmset:";
 const char txtp_cmd_fpwmget[] PROGMEM = "fpwmget";
 const char txtp_cmd_alive[] PROGMEM = "alive";
@@ -145,6 +146,15 @@ const char txtp_cmd_onameget[] PROGMEM = "onameget";
 const char txtp_cmd_aliveget[] PROGMEM = "aliveget";
 const char txtp_cmd_aliveset[] PROGMEM = "aliveset:";
 const char txtp_cmd_servomove[] PROGMEM = "servomove:";
+const char txtp_cmd_gpioget[] PROGMEM = "gpioget:";
+const char txtp_cmd_gpioset[] PROGMEM = "gpioset:";
+const char txtp_cmd_gpio[] PROGMEM = "gpio:";
+const char txtp_cmd_gpioclear[] PROGMEM = "gpioclear:";
+
+//komplette und sprintf_P() Rückmeldungen
+const char txtp_err_gpioset_pin[] PROGMEM = "<log:gpioset/clear - Pin-Wert ist ungültig!>";
+const char txtp_err_gpioset_port[] PROGMEM = "<log:gpioset/clear - Port-Wert ist ungültig!>";
+const char txtp_i_servo[] PROGMEM = "<log:Wert %i für Servoindex %i gesetzt.>";
 
 int main(void)
 {
@@ -203,6 +213,7 @@ int main(void)
 	wlan_puts(test);
 	*/
 
+	/*
 	sprintf(test, "<log:servocount=%i>", servo_count);	//TODO: test
 	wlan_puts(test);
 	sprintf(test, "<log:servopin0=P%c%i>", servoPort[0], servoPin[0]);	//TODO: test
@@ -213,7 +224,7 @@ int main(void)
 	wlan_puts(test);
 	sprintf(test, "<log:servoval1=%i>", servoValue[1]);	//TODO: test
 	wlan_puts(test);
-
+	*/
 
 //-------------------------------------------------------------------------------------------------------------
 //------                       H A U P T S C H L E I F E                                               --------

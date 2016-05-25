@@ -58,6 +58,6 @@ extern void eeprom_update_MotorConfig(const uint8_t mconfig);
 extern uint8_t eeprom_getAliveCheckSecs();
 extern void eeprom_update_AliveCheckSecs(const uint8_t secs);
 extern uint8_t eeprom_getGPIO(char port);
-extern void eeprom_update_GPIO(uint8_t maskB, uint8_t maskD, uint8_t maskE, uint8_t maskG);
-
+extern void eeprom_update_GPIOs(uint8_t maskB, uint8_t maskD, uint8_t maskE, uint8_t maskG);
+extern void eeprom_update_GPIO(char port, uint8_t mask);
 #endif /* EEDATA_H_ */

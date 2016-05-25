@@ -7,25 +7,26 @@
 
 #include "commands.h"
 
-//#include <avr/eeprom.h>
+//#include <avr/interrupt.h>
 #include <avr/interrupt.h>
-//#include <avr/io.h>
 #include <avr/iomxx0_1.h>
 //#include <avr/pgmspace.h>
 #include <avr/pgmspace.h>
-//#include <avr/wdt.h>	//für Watchdog Reset
+//#include <avr/wdt.h>
 #include <avr/wdt.h>
 #include <stdint.h>
-#include <stdio.h>		// für "sprintf"!!! TODO: nur für Tests: wieder weg
-#include <stdlib.h>		// für "itoa"
-#include <string.h>			// für "strcmp"
-//#include <util/delay.h>	// für delay_ms()
+//#include <stdint.h>
+#include <stdio.h>
+//#include <stdio.h>		// für "sprintf"!!! TODO: nur für Tests: wieder weg
+//#include <stdlib.h>		// für "itoa"
+#include <stdlib.h>
+#include <string.h>
+//#include <string.h>			// für "strcmp"
 
 #include "eedata.h"
-#include "funktionen.h"	// Funktionen für Hauptschleife und commands.c#include "ledc.h"
-#include "lokbasis_hwdef.h"		// Hardware-Definitionen für die verschiedenen Boards#include "main.h"
+#include "funktionen.h"	// Funktionen für Hauptschleife und commands.c#include "ledc.h"#include "ledc.h"
+#include "lokbasis_hwdef.h"		// Hardware-Definitionen für die verschiedenen Boards#include "main.h"#include "main.h"
 #include "servo.h"
-//#include "uart.h"
 #include "wlan.h"
 
 //-----------------------------------------------------------------------------------------
@@ -33,6 +34,7 @@
 // es darf nur ein einziger gültiger Befehl vorhanden sein -> daher aufruf aus check_wlan_cmd()
 // die <> sind bereits entfernt!!!
 // TODO: strlcpy,strlcat: https://www.sudo.ws/todd/papers/strlcpy.html statt strncpy..
+// TODO: checken, wo man (für Rückmeldungen) auf sprintf_P() umbauen kann
 //-----------------------------------------------------------------------------------------
 void befehl_auswerten(void)
 {
@@ -220,13 +222,13 @@ void befehl_auswerten(void)
 		servoValue[servonr-1] = servo_pos;	// index = 0 bis SERVOCOUNTMAX-1
 		sei();
 
-		sprintf(test, "<log:Wert %i für Servoindex %i gesetzt.>", servoValue[servonr-1], servonr-1);	//TODO: test
+		sprintf_P(test, txtp_i_servo, servoValue[servonr-1], servonr-1);	//TODO: test
 		wlan_puts(test);
 	}
 
 
 	
-	// <gpioc:pin:wert> pin: 0-7, wert: 0 oder 1
+	// <gpioc:pin:wert> pin: 0-7, wert: 0 oder 1	TODO: veraltet, abgelöst durch: <gpio:port:pin:wert> -> entfernen
 	else if(!strncmp_P(wlan_string, txtp_cmd_gpioc, 6))	// "gpioc:" - <gpioc:pin:wert> pin: 0-7, wert: 0 oder 1
 	{
 		uint8_t pinnr,pinval;
@@ -333,11 +335,155 @@ void befehl_auswerten(void)
 		}
 	}
 
+	else if(!strncmp_P(wlan_string, txtp_cmd_gpioget, 8))	// txtp_cmd_gpioget "gpioget:" char port
+	{
+		char port = wlan_string[8];
+
+		if ((port == 'B') || (port == 'C')|| (port == 'D') || (port == 'E') || (port == 'G'))	//nur für gültige Ports -> PortC darf abgefragt werden, ist immer komplett auf Output
+		{
+			uint8_t gpiopins = getGPIOs(port);
+			uint8_t usable_pins = getUsableGPIOs(port);	// für ungültigen Port oder wenn nichts verwendet werden darf wird usable_pins = 0 zurückgegeben
+			uint8_t values = getGPIOValues(port);
+			sprintf_P(test, txtp_cmd_gpioi, port, usable_pins, gpiopins, values);	//"<gpioi:%i:%i:%i:%i>" <gpioi:port:mögliche:verwendete:werte>    :char:byte-mask:byte-mask:byte-mask
+			wlan_puts(test);
+		}
+	}
+
+	else if(!strncmp_P(wlan_string, txtp_cmd_gpioset, 8))	// "gpioset:" <gpioset:port:pin> GPIO-Pin definieren und aktivieren
+	{
+		uint8_t pinnr = 0;
+		uint8_t error = 0;
+
+		char port = wlan_string[8];
+		if (!((port == 'B') || (port == 'D') || (port == 'E') || (port == 'G'))) //nur für gültige Ports
+		{
+			error = 1;
+			wlan_puts_p(txtp_err_gpioset_port);
+		}
+
+		strncpy(test, wlan_string+10, 1);	//nur 1 Zeichen auswerten (pin)
+		pinnr = (uint8_t)atoi(test);
+
+		if (pinnr > 7)
+		{
+			error = 1;
+			wlan_puts_p(txtp_err_gpioset_pin);
+		}
+
+		if (!error)
+		{
+			uint8_t mask = getGPIOs(port) || filterGPIOMask(port, (1<<pinnr));
+			eeprom_update_GPIO(port, mask);
+
+			switch (port)	//Pin auf Output setzen
+			{
+			case 'B':
+				DDRB |= mask;
+				break;
+
+			case 'D':
+				DDRD |= mask;
+				break;
+
+			case 'E':
+				DDRE |= mask;
+				break;
+
+			case 'G':
+				DDRG |= mask;
+				break;
+			}
+		}
+	}
+
+	else if(!strncmp_P(wlan_string, txtp_cmd_gpioclear, 10))	// "gpioclear:" <gpioclear:port:pin> Gegenstück zu <gpioset:port:pin> -> verwendeten GPIO-Pin wieder freigeben!
+	{
+		uint8_t pinnr = 0;
+		uint8_t error = 0;
+
+		char port = wlan_string[10];
+		if (!((port == 'B') || (port == 'D') || (port == 'E') || (port == 'G'))) 	//nur für gültige Ports
+		{
+			error = 1;
+			wlan_puts_p(txtp_err_gpioset_port);
+		}
+
+		strncpy(test, wlan_string+12, 1);	//nur 1 Zeichen auswerten (pin)
+		pinnr = (uint8_t)atoi(test);
+
+		if (pinnr > 7)
+		{
+			error = 1;
+			wlan_puts_p(txtp_err_gpioset_pin);
+		}
+
+		if (!error)
+		{
+			uint8_t mask = getGPIOs(port) || filterGPIOMask(port, (1<<pinnr));
+			uint8_t clear_mask = filterGPIOMask(port, (1<<pinnr));	// ungültige Pins werden ausgefiltert, damit der User keine Systemfunktionen deaktiviert!
+
+			mask &= ~clear_mask;
+
+			eeprom_update_GPIO(port, mask);	// neue Konfiguration speichern
+
+			switch (port)	//Pin auf Input setzen (Standardzustand, sicherer)
+			{
+			case 'B':
+				DDRB &= ~clear_mask;
+				break;
+
+			case 'D':
+				DDRD |= ~clear_mask;
+				break;
+
+			case 'E':
+				DDRE |= ~clear_mask;
+				break;
+
+			case 'G':
+				DDRG |= ~clear_mask;
+				break;
+			}
+		}
+	}
+
+
+	else if(!strncmp_P(wlan_string, txtp_cmd_gpio, 5))	// "gpio:" - <gpio:port:pin:wert> port B/C/D/E/G (Großbuchstabe!), pin: 0-7, wert: 0 oder 1
+	{
+		uint8_t error = 0;
+		char port = wlan_string[5];
+		uint8_t pinnr,pinval;
+		strncpy(test, wlan_string+7, 1);	//nur 1 Zeichen auswerten (pin)
+		pinnr = (uint8_t)atoi(test);
+
+		memset(test, 0, UART_MAXSTRLEN+1);	// text wieder leeren
+		strncpy(test, wlan_string+9, 1);	//nur 1 Zeichen auswerten (wert) -> ok, weil vorher test gelöscht wurde!!
+		pinval = (uint8_t)atoi(test);
+
+		if (pinnr > 7) { error = 1; }	// TODO: error Rückmeldung
+
+		if (!((port == 'B') || (port == 'C')|| (port == 'D') || (port == 'E') || (port == 'G')))	//nur für gültige Ports -> PortC darf abgefragt werden, ist immer komplett auf Output
+		{
+			error = 1;	// TODO: error Rückmeldung
+		}
+
+		uint8_t gpiomask = filterGPIOMask(port, (1<<pinnr));	// pin erlaubt?
+
+		if ((!error) & (gpiomask))
+		{
+			setGPIOPin(port, pinnr, pinval);	// Ausgabe auf Pin
+
+			// port-status rückmelden
+			uint8_t gpiopins = getGPIOs(port);
+			uint8_t usable_pins = getUsableGPIOs(port);	// für ungültigen Port oder wenn nichts verwendet werden darf wird usable_pins = 0 zurückgegeben
+			uint8_t values = getGPIOValues(port);
+			sprintf_P(test, txtp_cmd_gpioi, port, usable_pins, gpiopins, values);	//"<gpioi:%i:%i:%i:%i>" <gpioi:port:mögliche:verwendete:werte>    :char:byte-mask:byte-mask:byte-mask
+			wlan_puts(test);
+		}
+	}
 
 
 	// TODO: ADCGPIO (adc_used) set,get,rückmeldung
-	// TODO: konfigurierbare GPIOs set,get,rückmeldung
-	// TODO: switch Befehle zum Schalten freier GPIOs
 	// TODO: alive-fuktion ja/nein, alive-interval
 
 

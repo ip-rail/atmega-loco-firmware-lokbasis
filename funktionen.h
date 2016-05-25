@@ -19,5 +19,10 @@ extern void checkMotorStatus();
 extern void warte_ms(unsigned int wartezeit);
 extern void remcrlf(char *crlftext);
 extern void init_gpios();
+extern uint8_t getUsableGPIOs(char port);
+extern uint8_t filterGPIOMask(char port, uint8_t mask);
+extern uint8_t getGPIOs(char port);
+extern uint8_t getGPIOValues(char port);
+extern void setGPIOPin(char port, uint8_t pinnr, uint8_t pinval);
 
 #endif /* FUNKTIONEN_H_ */

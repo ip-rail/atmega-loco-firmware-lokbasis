@@ -21,7 +21,7 @@
 #include "wlan.h"
 #include "uart.h"
 #include "funktionen.h"
-
+#include "eedata.h"
 
 
 void init_timer5()
@@ -433,9 +433,7 @@ void init_gpios()
 	uint8_t portE_servo = 0;
 	uint8_t portG_servo = 0;
 
-	uint8_t i;
-
-	for( i = 0; i < servo_count; i++ )
+	for(uint8_t i = 0; i < servo_count; i++ )
 	{
 		if (servoPort[i] == 'B') { portB_servo += servoPin[i]; }
 		else if (servoPort[i] == 'D') { portD_servo += servoPin[i]; }
@@ -456,6 +454,127 @@ void init_gpios()
 }
 
 
+uint8_t getUsableGPIOs(char port)
+{
+	uint8_t mask = 0;
+
+	switch (port)
+	{
+	case 'B':
+		mask = GPIO_USABLE_PORT_B;
+		break;
+
+	case 'C':
+		mask = GPIO_USABLE_PORT_C;
+		break;
+
+	case 'D':
+		mask = GPIO_USABLE_PORT_D;
+		break;
+
+	case 'E':
+		mask = GPIO_USABLE_PORT_E;
+		break;
+
+	case 'G':
+		mask = GPIO_USABLE_PORT_G;
+		break;
+	}
+	return mask;	// bei ungültigem Port wird (wie wenn nichts frei ist) 0 zurückgegeben
+}
+
+uint8_t filterGPIOMask(char port, uint8_t mask)	// usablemask und servomask für diesen Port prüfen, ob die GPIO-mask ok ist
+{
+	uint8_t servomask = 0;
+
+	for(uint8_t i = 0; i < servo_count; i++ )	// Servopins für den port suchen
+	{
+		if (servoPort[i] == port) { servomask += servoPin[i]; }
+	}
+
+	mask = mask & getUsableGPIOs(port) & !servomask;	// pins müssen in usablemask und dürfen nicht in servomask vorhanden sein
+
+	return mask;
+}
 
 
+uint8_t getGPIOs(char port)	// konfigurierte GPIOs (Outputs) für einen Port auslesen
+{
+	uint8_t gpiomask = 0;
+
+	if (port == 'C') { gpiomask = 255;	} // Spezialfall Port C: immer ganzer Port GPIOs
+	else { gpiomask = eeprom_getGPIO(port); }
+
+	gpiomask = filterGPIOMask(port, gpiomask);
+
+	return gpiomask;	// für ungültigen Port wird 0 zurückgegeben (das Problem muss dann über "usable" erkannt werden
+}
+
+// die Werte für die gesetzten Port-Pins auslesen
+uint8_t getGPIOValues(char port)
+{
+	uint8_t values = 0;
+
+	switch (port)
+	{
+	case 'B':
+		values = PORTB;
+		break;
+
+	case 'C':
+		values = PORTC;
+		break;
+
+	case 'D':
+		values = PORTD;
+		break;
+
+	case 'E':
+		values = PORTE;
+		break;
+
+	case 'G':
+		values = PORTG;
+		break;
+	}
+
+	values = getGPIOs(port) & values;	// nur die Werte für die verwendeten Pins liefern!!!
+
+	return values;	// bei ungültigem Port wird 0 zurückgegeben
+}
+
+
+// Wert 0 oder 1 auf GPIO Port-Pin ausgeben (Gültigkeit Port/Pin muss vorher schon geprüft werden!)
+// port: B / C / D / E / G
+// pinnr: 0-7   pinval: 0 / 1
+void setGPIOPin(char port, uint8_t pinnr, uint8_t pinval)
+{
+switch (port)
+		{
+		case 'B':
+			if (pinval) { PORTB |= (1<<pinnr); }	// Pin auf 1 setzen
+			else { PORTB &= ~(1<<pinnr); }			// Pin auf 0 setzen
+			break;
+
+		case 'C':
+			if (pinval) { PORTC |= (1<<pinnr); }
+			else { PORTC &= ~(1<<pinnr); }
+			break;
+
+		case 'D':
+			if (pinval) { PORTD |= (1<<pinnr); }
+			else { PORTD &= ~(1<<pinnr); }
+			break;
+
+		case 'E':
+			if (pinval) { PORTE |= (1<<pinnr); }
+			else { PORTE &= ~(1<<pinnr); }
+			break;
+
+		case 'G':
+			if (pinval) { PORTG |= (1<<pinnr); }
+			else { PORTG &= ~(1<<pinnr); }
+			break;
+		}
+}
 

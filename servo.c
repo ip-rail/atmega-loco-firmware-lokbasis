@@ -7,7 +7,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <stdio.h>		// für "sprintf"!!! TODO: nur für Tests: wieder weg
+//#include <stdio.h>		// für "sprintf"!!! TODO: nur für Tests: wieder weg
 
 #include "eedata.h"
 #include "servo.h"

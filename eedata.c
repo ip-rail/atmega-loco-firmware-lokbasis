@@ -249,7 +249,7 @@ uint8_t eeprom_getGPIO(char port)	// TODO: ACHTUNG: muss Großbuchstabe sein!! -
 	return value;
 }
 
-void eeprom_update_GPIO(uint8_t maskB, uint8_t maskD, uint8_t maskE, uint8_t maskG)
+void eeprom_update_GPIOs(uint8_t maskB, uint8_t maskD, uint8_t maskE, uint8_t maskG)
 {
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_B, maskB);
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_D, maskD);
@@ -257,3 +257,25 @@ void eeprom_update_GPIO(uint8_t maskB, uint8_t maskD, uint8_t maskE, uint8_t mas
 	eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_G, maskG);
 }
 
+void eeprom_update_GPIO(char port, uint8_t mask)
+{
+
+	switch (port)
+		{
+		case 'B':
+			eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_B, mask);
+			break;
+
+		case 'D':
+			eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_D, mask);
+			break;
+
+		case 'E':
+			eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_E, mask);
+			break;
+
+		case 'G':
+			eeprom_update_byte((uint8_t *)EEDATA_ADR_GPIOS_G, mask);
+			break;
+		}
+}
