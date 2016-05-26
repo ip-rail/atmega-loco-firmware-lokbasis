@@ -5,24 +5,17 @@
  *      Author: Michael Brunnbauer
  */
 
-#include "commands.h"
 
-//#include <avr/interrupt.h>
 #include <avr/interrupt.h>
 #include <avr/iomxx0_1.h>
-//#include <avr/pgmspace.h>
 #include <avr/pgmspace.h>
-//#include <avr/wdt.h>
 #include <avr/wdt.h>
 #include <stdint.h>
-//#include <stdint.h>
-#include <stdio.h>
-//#include <stdio.h>		// für "sprintf"!!! TODO: nur für Tests: wieder weg
-//#include <stdlib.h>		// für "itoa"
-#include <stdlib.h>
-#include <string.h>
-//#include <string.h>			// für "strcmp"
+#include <stdio.h>		// für "sprintf"
+#include <stdlib.h>		// für "itoa"
+#include <string.h>			// für "strcmp"
 
+#include "commands.h"
 #include "eedata.h"
 #include "funktionen.h"	// Funktionen für Hauptschleife und commands.c#include "ledc.h"#include "ledc.h"
 #include "lokbasis_hwdef.h"		// Hardware-Definitionen für die verschiedenen Boards#include "main.h"#include "main.h"
@@ -146,8 +139,9 @@ void befehl_auswerten(void)
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_hwget))
 	{
-		wlan_puts_p(txtp_hwi); //  für das UC02 Board mit "<hwi:01>" antworten
-		wlan_puts_p(txtp_cmd_ntypi);	// Netzwerk-Typ (dummes WLAN-Modul)
+		//wlan_puts_p(txtp_cmd_hwi); //  für das UC02 Board mit "<hwi:01>" antworten
+		//wlan_puts_p(txtp_cmd_ntypi);	// Netzwerk-Typ (dummes WLAN-Modul)
+		sendHWinfo(test);		// wie bisher + Status für alle GPIO-Ports
 	}
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_servoget))		// servoget - Servo-Konfiguration wird angefordert
@@ -266,10 +260,7 @@ void befehl_auswerten(void)
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_fpwmget))	// <fpwmget> PWM-Frequenz abfragen -> Rückmeldung <fpwmi:n>
 	{
-		// txtp_cmd_fpwmi[] PROGMEM = "<fpwmi:";
-		strlcpy_P(test, txtp_cmd_fpwmi, sizeof(test));
-		itoa(motor_pwmf, test+7, 10);
-		strlcat_P(test, txtp_cmdend, sizeof(test));	// will länge des kompletten "test" buffers+0
+		sprintf_P(test, txtp_cmd_fpwmi, motor_pwmf);
 		wlan_puts(test);
 	}
 
@@ -281,10 +272,7 @@ void befehl_auswerten(void)
 
 	else if(!strcmp_P(wlan_string, txtp_cmd_aliveget))	// "aliveget" Wert für das alive-Timeout -> Rückmeldung <alivei:*sekunden*>
 	{
-		// const char txtp_cmd_alivei[] PROGMEM = "<alivei:";
-		strlcpy_P(test, txtp_cmd_alivei, sizeof(test));
-		itoa(eeprom_getAliveCheckSecs(), test+8, 10);
-		strlcat_P(test, txtp_cmdend, sizeof(test));	// will länge des kompletten "test" buffers+0
+		sprintf_P(test, txtp_cmd_alivei, eeprom_getAliveCheckSecs());
 		wlan_puts(test);
 	}
 
@@ -355,7 +343,7 @@ void befehl_auswerten(void)
 		uint8_t error = 0;
 
 		char port = wlan_string[8];
-		if (!((port == 'B') || (port == 'D') || (port == 'E') || (port == 'G'))) //nur für gültige Ports
+		if (!((port == 'B') || (port == 'D') || (port == 'E') || (port == 'G'))) //nur für gültige Ports. Für Port C ist schon alles auf Ausgang gesetzt
 		{
 			error = 1;
 			wlan_puts_p(txtp_err_gpioset_port);
@@ -372,7 +360,7 @@ void befehl_auswerten(void)
 
 		if (!error)
 		{
-			uint8_t mask = getGPIOs(port) || filterGPIOMask(port, (1<<pinnr));
+			uint8_t mask = getGPIOs(port) | filterGPIOMask(port, (1<<pinnr));
 			eeprom_update_GPIO(port, mask);
 
 			switch (port)	//Pin auf Output setzen
@@ -419,7 +407,7 @@ void befehl_auswerten(void)
 
 		if (!error)
 		{
-			uint8_t mask = getGPIOs(port) || filterGPIOMask(port, (1<<pinnr));
+			uint8_t mask = getGPIOs(port) | filterGPIOMask(port, (1<<pinnr));
 			uint8_t clear_mask = filterGPIOMask(port, (1<<pinnr));	// ungültige Pins werden ausgefiltert, damit der User keine Systemfunktionen deaktiviert!
 
 			mask &= ~clear_mask;
@@ -460,16 +448,21 @@ void befehl_auswerten(void)
 		strncpy(test, wlan_string+9, 1);	//nur 1 Zeichen auswerten (wert) -> ok, weil vorher test gelöscht wurde!!
 		pinval = (uint8_t)atoi(test);
 
-		if (pinnr > 7) { error = 1; }	// TODO: error Rückmeldung
+		if (pinnr > 7)
+		{
+			error = 1;
+			wlan_puts_p(txtp_err_gpio_pin);
+		}
 
 		if (!((port == 'B') || (port == 'C')|| (port == 'D') || (port == 'E') || (port == 'G')))	//nur für gültige Ports -> PortC darf abgefragt werden, ist immer komplett auf Output
 		{
-			error = 1;	// TODO: error Rückmeldung
+			error = 1;
+			wlan_puts_p(txtp_err_gpio_port);
 		}
 
 		uint8_t gpiomask = filterGPIOMask(port, (1<<pinnr));	// pin erlaubt?
 
-		if ((!error) & (gpiomask))
+		if ((!error) && (gpiomask))
 		{
 			setGPIOPin(port, pinnr, pinval);	// Ausgabe auf Pin
 

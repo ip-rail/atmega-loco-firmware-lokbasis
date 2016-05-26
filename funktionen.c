@@ -9,6 +9,7 @@
 
 #include <avr/io.h>
 #include <string.h>		// für "strcmp"
+#include <stdio.h>		// für "sprintf"
 #include <stdlib.h>		// für "itoa"
 #include <util/delay.h>	// für delay_ms()
 #include <avr/interrupt.h>
@@ -22,6 +23,9 @@
 #include "uart.h"
 #include "funktionen.h"
 #include "eedata.h"
+
+//char gpioport_all[] = { 'B', 'C', 'D', 'E', 'G' };
+//char gpioport[] = { 'B', 'D', 'E', 'G' };
 
 
 void init_timer5()
@@ -428,6 +432,7 @@ void init_gpios()
 {
 	// TODO: definierte ADC müssen auch noch ausgeschlossen werden (vorerst alle ADC ausgeschlossen)!!
 
+	/*
 	uint8_t portB_servo = 0;	// Masken für die einzelenen Ports
 	uint8_t portD_servo = 0;
 	uint8_t portE_servo = 0;
@@ -439,18 +444,27 @@ void init_gpios()
 		else if (servoPort[i] == 'D') { portD_servo += servoPin[i]; }
 		else if (servoPort[i] == 'E') { portE_servo += servoPin[i]; }
 		else if (servoPort[i] == 'G') { portG_servo += servoPin[i]; }
-	}
+	} */
 
 	// uint8_t adc_mask = eeprom_getADCGPIO();	// bit = 1 bedeutet: wird für ADC (als Eingang) verwendendet - steht für GPIO nicht zur Verfügung
 
 	// alles was auf 1 steht als Ausgänge setzen
+	/*
 	//DDRA |= GPIO_USABLE_PORT_A;	// keine freien GPIOs
-	DDRB |= (GPIO_USABLE_PORT_B & eeprom_getGPIO('B') & !portB_servo);
+	//DDRB |= (GPIO_USABLE_PORT_B & eeprom_getGPIO('B') & !portB_servo);
 	DDRC |= GPIO_USABLE_PORT_C;	// Port C immer komplett als Ausgänge definieren
 	DDRD |= (GPIO_USABLE_PORT_D & eeprom_getGPIO('D') & !portD_servo);
 	DDRE |= (GPIO_USABLE_PORT_E & eeprom_getGPIO('E') & !portE_servo);
 	//DDRF |= GPIO_USABLE_PORT_F;	// Port F (ADC) vorerst gar nicht, später ev. konfigurierbar machen
 	DDRG |= (GPIO_USABLE_PORT_G & eeprom_getGPIO('G') & !portG_servo);
+	*/
+
+	DDRB |= filterGPIOMask('B', eeprom_getGPIO('B'));
+	DDRC |= GPIO_USABLE_PORT_C;	// Port C immer komplett als Ausgänge definieren
+	DDRD |= filterGPIOMask('D', eeprom_getGPIO('D'));
+	DDRE |= filterGPIOMask('E', eeprom_getGPIO('E'));
+	DDRG |= filterGPIOMask('G', eeprom_getGPIO('G'));
+
 }
 
 
@@ -489,7 +503,7 @@ uint8_t filterGPIOMask(char port, uint8_t mask)	// usablemask und servomask für
 
 	for(uint8_t i = 0; i < servo_count; i++ )	// Servopins für den port suchen
 	{
-		if (servoPort[i] == port) { servomask += servoPin[i]; }
+		if (servoPort[i] == port) { servomask += (1<<servoPin[i]); }
 	}
 
 	mask = mask & getUsableGPIOs(port) & !servomask;	// pins müssen in usablemask und dürfen nicht in servomask vorhanden sein
@@ -576,5 +590,34 @@ switch (port)
 			else { PORTG &= ~(1<<pinnr); }
 			break;
 		}
+}
+
+// Rückmeldetext für Hardware-Info-Anforderung (<hwget>) zusammenstellen
+// Größe von txtbuffer muss sein: UART_MAXSTRLEN+1 (+1 wg. abschließender Null)
+// txtbuffer muss leer sein (wird in befehl_auswerten() vorher schon gemacht)
+// TODO: optimierung: es könnte hwi+ntypi+die ersten 2 Ports für's Senden zusammengefasst werden (max. 59 Zeichen ohne 0)
+//       und die restlichen 3 Ports ebenfalls (max. 63 Zeiche ohne 0)
+void sendHWinfo(char * txtbuffer)
+{
+	uint8_t txtsize = UART_MAXSTRLEN+1;
+	//strlcat(txtbuffer, txtbuffer, txtsize);		// will länge des kompletten "test" buffers+0
+	strlcat_P(txtbuffer, txtp_cmd_hwi, txtsize); 	//  für das UC02 Board mit "<hwi:01>" antworten
+	strlcat_P(txtbuffer, txtp_cmd_ntypi, txtsize);	// Netzwerk-Typ (dummes WLAN-Modul)
+	wlan_puts(txtbuffer);
+
+	// GPIO-Port status für alle Ports B / C / D / E / G 	// TODO: später auch Soervo und ADC???
+	char port[] = { 'B', 'C', 'D', 'E', 'G' };
+	uint8_t gpiopins = 0;
+	uint8_t usable_pins = 0;
+	uint8_t values = 0;
+
+	for (uint8_t i=0; i<5; i++)
+	{
+		gpiopins = getGPIOs(port[i]);
+		usable_pins = getUsableGPIOs(port[i]);	// für ungültigen Port oder wenn nichts verwendet werden darf wird usable_pins = 0 zurückgegeben
+		values = getGPIOValues(port[i]);
+		sprintf_P(txtbuffer, txtp_cmd_gpioi, port[i], usable_pins, gpiopins, values);	//"<gpioi:%i:%i:%i:%i>" <gpioi:port:mögliche:verwendete:werte>    :char:byte-mask:byte-mask:byte-mask
+		wlan_puts(txtbuffer);
+	}
 }
 

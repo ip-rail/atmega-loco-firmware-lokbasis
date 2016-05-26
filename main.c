@@ -99,21 +99,26 @@ const char dev_swversion[] PROGMEM = "6";   		// Software-Version -> keine Ände
 const char txtp_cmdend[] PROGMEM = ">";						// Befehlsende-Zeichen
 const char txtp_cmdtrenn[] PROGMEM = ":";					// Options-Trennzeichen
 const char txtp_errmotor[] PROGMEM = "<error:motor:";		// Motor-Error
-const char txtp_sd[] PROGMEM = "<sd:";						// Speed-Rückmeldung
+const char txtp_sd[] PROGMEM = "<sd:%i>";						// Speed-Rückmeldung
 const char txtp_iam[] PROGMEM = "<iam:1:";					// Meldung mit Lok-Namen <iam:typ:name>
 const char txtp_pong[] PROGMEM = "<pong>";					// Antwort für den ping Befe
 const char txtp_default_lok_name[] PROGMEM = "Lok X";		// Standardwert für EEData Lokname
 const char txtp_default_owner_name[] PROGMEM = "TheOwner";	// Standardwert für EEData Owner-Name
-const char txtp_hwi[] PROGMEM = "<hwi:01>";					// Antwort auf <hwget> 01 = Board UC02 (ATMega2561)
+const char txtp_cmd_hwi[] PROGMEM = "<hwi:01>";					// Antwort auf <hwget> 01 = Board UC02 (ATMega2561)
 const char txtp_cmd_servoi[] PROGMEM = "<servoi:";			// Antwort auf <servoget>
 const char txtp_cmd_ui[] PROGMEM = "<ui:";					// Rückmeldung Spannungswerte
-const char txtp_cmd_fpwmi[] PROGMEM = "<fpwmi:";			// Rückmeldung Motor-PWM-Frequenz
+const char txtp_cmd_fpwmi[] PROGMEM = "<fpwmi:%i>";			// Rückmeldung Motor-PWM-Frequenz
 const char txtp_cmd_mcfgi[] PROGMEM = "<mcfgi:";			// Rückmeldung H-Brücken Konfig
 const char txtp_cmd_log[] PROGMEM = "<log:";				// Rückmeldung Log-Text
 const char txtp_cmd_ntypi[] PROGMEM = "<ntypi:1>";			// Rückmeldung Netzwerk-Typ
 const char txtp_cmd_onamei[] PROGMEM = "<onamei:";			// Rückmeldung Besitzer-Name
-const char txtp_cmd_alivei[] PROGMEM = "<alivei:";			// Rückmeldung Wert für das alive-Timeout
-const char txtp_cmd_gpioi[] PROGMEM = "<gpioi:%i:%i:%i:%i>";	// Rückmeldung GPIO-Konfiguration (GPIO-Info command)
+const char txtp_cmd_alivei[] PROGMEM = "<alivei:%i>";			// Rückmeldung Wert für das alive-Timeout
+const char txtp_cmd_gpioi[] PROGMEM = "<gpioi:%c:%i:%i:%i>";	// Rückmeldung GPIO-Konfiguration (GPIO-Info command)
+const char txtp_err_gpioset_pin[] PROGMEM = "<log:gpioset/clear - Pin-Wert ist ungültig!>";
+const char txtp_err_gpioset_port[] PROGMEM = "<log:gpioset/clear - Port-Wert ist ungültig!>";
+const char txtp_i_servo[] PROGMEM = "<log:Wert %i für Servoindex %i gesetzt.>";
+const char txtp_err_gpio_pin[] PROGMEM = "<log:gpio - Pin-Wert ist ungültig!>";		// TODO: für Test
+const char txtp_err_gpio_port[] PROGMEM = "<log:gpio - Port-Wert ist ungültig!>";	// TODO: für Test
 
 // Befehle - Strings für auswertung, daher ohne spitze Klammern
 const char txtp_cmd_stop[] PROGMEM = "stop";
@@ -151,10 +156,6 @@ const char txtp_cmd_gpioset[] PROGMEM = "gpioset:";
 const char txtp_cmd_gpio[] PROGMEM = "gpio:";
 const char txtp_cmd_gpioclear[] PROGMEM = "gpioclear:";
 
-//komplette und sprintf_P() Rückmeldungen
-const char txtp_err_gpioset_pin[] PROGMEM = "<log:gpioset/clear - Pin-Wert ist ungültig!>";
-const char txtp_err_gpioset_port[] PROGMEM = "<log:gpioset/clear - Port-Wert ist ungültig!>";
-const char txtp_i_servo[] PROGMEM = "<log:Wert %i für Servoindex %i gesetzt.>";
 
 int main(void)
 {
@@ -268,10 +269,11 @@ int main(void)
 
 		if (state & STATE_1X_PRO_SEK)		// Meldung an Server / Steuergerät
 		{
-			memset(test, 0, UART_MAXSTRLEN+1);	// string leeren
-			strlcpy_P(test, txtp_sd, 5);	// Rückmeldung der Geschwindigkeit	//bei der Länge immer 0-Zeichen mitzählen!
-			itoa(speed, test+4, 10);
-			strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1);	// will länge des kompletten "test" buffers+0
+			//memset(test, 0, UART_MAXSTRLEN+1);	// string leeren
+			//strlcpy_P(test, txtp_sd, 5);	// Rückmeldung der Geschwindigkeit	//bei der Länge immer 0-Zeichen mitzählen!
+			//itoa(speed, test+4, 10);
+			//strlcat_P(test, txtp_cmdend, UART_MAXSTRLEN+1);	// will länge des kompletten "test" buffers+0
+			sprintf_P(test, txtp_sd, speed);
 			wlan_puts(test);
 
 			//TODO Test Servo

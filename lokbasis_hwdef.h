@@ -87,10 +87,10 @@
 #define GPIO_USABLE_PORT_A	0
 #define GPIO_USABLE_PORT_B	143
 #define GPIO_USABLE_PORT_C	255
-#define GPIO_USABLE_PORT_D	240
+#define GPIO_USABLE_PORT_D	112		// PD7 als TEST Blinkpin reserviert. Sonst: 240
 #define GPIO_USABLE_PORT_E	56
 #define GPIO_USABLE_PORT_F	0
-#define GPIO_USABLE_PORT_G	23
+#define GPIO_USABLE_PORT_G	39
 
 #endif	// HW_UC02
 

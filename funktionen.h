@@ -24,5 +24,6 @@ extern uint8_t filterGPIOMask(char port, uint8_t mask);
 extern uint8_t getGPIOs(char port);
 extern uint8_t getGPIOValues(char port);
 extern void setGPIOPin(char port, uint8_t pinnr, uint8_t pinval);
+extern void sendHWinfo(char * txtbuffer);
 
 #endif /* FUNKTIONEN_H_ */
