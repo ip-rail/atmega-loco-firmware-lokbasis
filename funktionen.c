@@ -451,12 +451,12 @@ void init_gpios()
 	// alles was auf 1 steht als Ausgänge setzen
 	/*
 	//DDRA |= GPIO_USABLE_PORT_A;	// keine freien GPIOs
-	//DDRB |= (GPIO_USABLE_PORT_B & eeprom_getGPIO('B') & !portB_servo);
+	//DDRB |= (GPIO_USABLE_PORT_B & eeprom_getGPIO('B') & ~portB_servo);
 	DDRC |= GPIO_USABLE_PORT_C;	// Port C immer komplett als Ausgänge definieren
-	DDRD |= (GPIO_USABLE_PORT_D & eeprom_getGPIO('D') & !portD_servo);
-	DDRE |= (GPIO_USABLE_PORT_E & eeprom_getGPIO('E') & !portE_servo);
+	DDRD |= (GPIO_USABLE_PORT_D & eeprom_getGPIO('D') & (~portD_servo));
+	DDRE |= (GPIO_USABLE_PORT_E & eeprom_getGPIO('E') & (~portE_servo));
 	//DDRF |= GPIO_USABLE_PORT_F;	// Port F (ADC) vorerst gar nicht, später ev. konfigurierbar machen
-	DDRG |= (GPIO_USABLE_PORT_G & eeprom_getGPIO('G') & !portG_servo);
+	DDRG |= (GPIO_USABLE_PORT_G & eeprom_getGPIO('G') & (~portG_servo));
 	*/
 
 	DDRB |= filterGPIOMask('B', eeprom_getGPIO('B'));
@@ -505,9 +505,7 @@ uint8_t filterGPIOMask(char port, uint8_t mask)	// usablemask und servomask für
 	{
 		if (servoPort[i] == port) { servomask += (1<<servoPin[i]); }
 	}
-
-	mask = mask & getUsableGPIOs(port) & !servomask;	// pins müssen in usablemask und dürfen nicht in servomask vorhanden sein
-
+	mask = mask & getUsableGPIOs(port) & ~servomask;	// pins müssen in usablemask und dürfen nicht in servomask vorhanden sein
 	return mask;
 }
 
@@ -615,6 +613,8 @@ void sendHWinfo(char * txtbuffer)
 	{
 		gpiopins = getGPIOs(port[i]);
 		usable_pins = getUsableGPIOs(port[i]);	// für ungültigen Port oder wenn nichts verwendet werden darf wird usable_pins = 0 zurückgegeben
+		// TODO: Achtung: für extern müssen von UsableGPIOs auch ServiPins weggefiltert werden, solange das nicht extern berücksichtigt wird!
+		usable_pins = filterGPIOMask(port[i], usable_pins);	// TODO: solange machen, bis das extern gemanagt wird!! (auch bei gpioi Rückmeldung von gpioget)
 		values = getGPIOValues(port[i]);
 		sprintf_P(txtbuffer, txtp_cmd_gpioi, port[i], usable_pins, gpiopins, values);	//"<gpioi:%i:%i:%i:%i>" <gpioi:port:mögliche:verwendete:werte>    :char:byte-mask:byte-mask:byte-mask
 		wlan_puts(txtbuffer);

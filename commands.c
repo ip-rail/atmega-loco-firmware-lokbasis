@@ -331,6 +331,8 @@ void befehl_auswerten(void)
 		{
 			uint8_t gpiopins = getGPIOs(port);
 			uint8_t usable_pins = getUsableGPIOs(port);	// für ungültigen Port oder wenn nichts verwendet werden darf wird usable_pins = 0 zurückgegeben
+			// TODO: Achtung: für extern müssen von UsableGPIOs auch ServiPins weggefiltert werden, solange das nicht extern berücksichtigt wird!
+			usable_pins = filterGPIOMask(port, usable_pins);	// TODO: solange machen, bis das extern gemanagt wird!! auch bei sendHWinfo()
 			uint8_t values = getGPIOValues(port);
 			sprintf_P(test, txtp_cmd_gpioi, port, usable_pins, gpiopins, values);	//"<gpioi:%i:%i:%i:%i>" <gpioi:port:mögliche:verwendete:werte>    :char:byte-mask:byte-mask:byte-mask
 			wlan_puts(test);
@@ -362,6 +364,11 @@ void befehl_auswerten(void)
 		{
 			uint8_t mask = getGPIOs(port) | filterGPIOMask(port, (1<<pinnr));
 			eeprom_update_GPIO(port, mask);
+
+			cli();
+			sprintf_P(test, txtp_gpio_save, port, mask);	// TODO Test: <log:save P%c msk %i>
+			sei();
+			wlan_puts(test);
 
 			switch (port)	//Pin auf Output setzen
 			{

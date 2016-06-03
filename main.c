@@ -119,6 +119,7 @@ const char txtp_err_gpioset_port[] PROGMEM = "<log:gpioset/clear - Port-Wert ist
 const char txtp_i_servo[] PROGMEM = "<log:Wert %i für Servoindex %i gesetzt.>";
 const char txtp_err_gpio_pin[] PROGMEM = "<log:gpio - Pin-Wert ist ungültig!>";		// TODO: für Test
 const char txtp_err_gpio_port[] PROGMEM = "<log:gpio - Port-Wert ist ungültig!>";	// TODO: für Test
+const char txtp_gpio_save[] PROGMEM = "<log:save P%c msk %i>";	// TODO: für Test
 
 // Befehle - Strings für auswertung, daher ohne spitze Klammern
 const char txtp_cmd_stop[] PROGMEM = "stop";

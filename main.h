@@ -83,6 +83,7 @@ extern const char txtp_err_gpioset_port[];
 extern const char txtp_i_servo[];
 extern const char txtp_err_gpio_pin[];
 extern const char txtp_err_gpio_port[];
+extern const char txtp_gpio_save[];
 
 //Befehle im Flash
 extern const char txtp_cmd_stop[];
